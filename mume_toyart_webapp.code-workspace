@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "path": "ui"
+    },
+    {
+      "path": "api"
+    }
+  ],
+  "settings": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "[vue]": {
+      "editor.defaultFormatter": "Vue.volar"
+    }
+  }
+}
