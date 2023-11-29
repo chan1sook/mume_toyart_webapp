@@ -1,19 +1,13 @@
 <template>
   <div class="fixed bottom-0 right-0">
-    <div v-if="isGuest || isDevUser"
-      class="bg-slate-700 border-2 shadow border-gray-400 flex flex-col gap-y-2 items-stretch">
-      <NuxtLink v-if="isGuest" href="/login" title="Login"
-        class="transition duration-200 px-2 py-1 flex flex-row gap-x-1 items-center hover:bg-white/10 active:bg-white/20">
-        <Icon name="uil:signin" />
-        <span class="hidden sm:inline">Login</span>
-      </NuxtLink>
+    <div v-if="!isGuest" class="bg-slate-700 border-2 shadow border-gray-400 flex flex-col gap-y-2 items-stretch">
       <NuxtLink v-if="isDevUser && !props.hideAdditem" href="/admin/add-item" title="Add Item"
         class="transition duration-200 px-2 py-1 flex flex-row gap-x-1 items-center hover:bg-white/10 active:bg-white/20">
         <Icon name="uil:plus" />
         <span class="hidden sm:inline">Add Item</span>
       </NuxtLink>
       <slot></slot>
-      <div v-if="!isGuest" title="Logout" @click="logout"
+      <div title="Logout" @click="logout"
         class="transition duration-200 cursor-pointer px-2 py-1 flex flex-row gap-x-1 items-center hover:bg-white/10 active:bg-white/20">
         <Icon name="uil:signout" />
         <span class="hidden sm:inline">Logout</span>
