@@ -1,6 +1,6 @@
 <template>
   <MumeContainer class="flex flex-col min-w-[400px]">
-    <MumeSearchTopBar @search="quickSearchItems" />
+    <MumeSearchTopBar v-model="searchKeyword" @search="quickSearchItems" />
     <div v-if="itemData" class="flex-1 flex flex-col overflow-y-auto">
       <div class="m-auto w-full p-4 flex flex-col justify-center items-center gap-y-2">
         <h3 class="transition-all duration-200 my-4 text-2xl transform scale-y-110 sm:text-3xl font-bold">
@@ -29,6 +29,8 @@
         <div class="custom-grid gap-x-2 gap-y-1 w-full max-w-5xl">
           <div class="font-bold">Name</div>
           <div>{{ itemData.name }}</div>
+          <div class="font-bold">MAC</div>
+          <div>{{ itemData.mac || '-' }}</div>
           <div class="font-bold">Description</div>
           <div>{{ itemData.description }}</div>
           <div class="font-bold">Created at</div>
@@ -36,7 +38,7 @@
           <div class="font-bold">Last Updated</div>
           <div>{{ formatDate(itemData.updatedAt) }}</div>
           <div class="font-bold">Owner</div>
-          <div>{{ itemData.owner }}</div>
+          <div>{{ itemData.owner || '-' }}</div>
           <div class="font-bold">Certificate</div>
           <div>
             <a :href="getCertPath(itemData.certificatePath)"
@@ -94,6 +96,7 @@ useHead({
 });
 
 const sessionData = useSessionData();
+const searchKeyword = ref("");
 const searchLoading = ref(false);
 const itemLoading = ref(true);
 const itemData: Ref<ArtItemResponse | undefined> = ref(undefined);

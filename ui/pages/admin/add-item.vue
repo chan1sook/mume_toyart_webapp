@@ -10,6 +10,10 @@
           <div>
             <MumeInput v-model="itemData.name" type="input" placeholder="Name" required />
           </div>
+          <div class="pt-2">MAC</div>
+          <div>
+            <MumeInput v-model="itemData.mac" type="input" placeholder="MAC" />
+          </div>
           <div class="pt-2">Description</div>
           <div>
             <MumeTextArea v-model="itemData.description" type="input" placeholder="Description" required />
@@ -88,6 +92,7 @@ definePageMeta({
 
 const itemData = ref({
   name: "",
+  mac: "",
   description: "",
   owner: "",
 })
@@ -242,6 +247,7 @@ async function addItem() {
 
     const bodyData = {
       name: itemData.value.name,
+      mac: itemData.value.mac,
       description: itemData.value.description,
       owner: itemData.value.owner,
       imagePaths: imgPaths,

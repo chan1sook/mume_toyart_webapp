@@ -16,12 +16,23 @@
         </template>
         <div class="flex flex-row justify-center flex-wrap gap-x-2 gap-y-1">
           <div v-for="item of searchResults"
-            class="transition duration-200 w-48 px-2 py-2 flex flex-col items-center gap-y-2 cursor-pointer hover:bg-white/10"
+            class="transition duration-200 w-48 px-2 py-2 flex flex-col items-center cursor-pointer hover:bg-white/10"
             @click="goToItemPage(item.itemId)">
             <img :src="item.image ? getImagePath(item.image) : getFakeImagePath('0')"
               class="h-20 border border-gray-400 rounded my-2" />
-            <div>{{ item.name }}</div>
-            <div class="italic text-sm">{{ item.owner }}</div>
+            <div class="my-1">{{ item.name }}</div>
+            <div class="text-sm">
+              <span title="MAC">
+                <Icon name="material-symbols:network-node" />:
+              </span>
+              {{ item.mac || '-' }}
+            </div>
+            <div class="text-sm">
+              <span title="Owner">
+                <Icon name="uil:user" />:
+              </span>
+              {{ item.owner || '-' }}
+            </div>
           </div>
         </div>
       </div>

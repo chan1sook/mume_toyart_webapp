@@ -38,6 +38,6 @@ export function searchOtherArtItems(keyword = "") {
   const kwRegex = new RegExp(escapeStringRegexp(keyword));
 
   return ArtItemModel.find({
-    $or: [{ name: kwRegex }, { owner: kwRegex }],
+    $or: [{ name: kwRegex }, { mac: kwRegex }, { owner: kwRegex }],
   });
 }

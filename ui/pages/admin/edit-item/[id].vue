@@ -14,6 +14,10 @@
           <div>
             <MumeInput v-model="itemData.name" type="input" placeholder="Name" required />
           </div>
+          <div class="pt-2">MAC</div>
+          <div>
+            <MumeInput v-model="itemData.mac" type="input" placeholder="MAC" />
+          </div>
           <div class="pt-2">Description</div>
           <div>
             <MumeTextArea v-model="itemData.name" type="input" placeholder="Description" required />
@@ -102,6 +106,7 @@ const itemLoading = ref(true);
 
 const itemData = ref({
   name: "",
+  mac: "",
   description: "",
   owner: "",
 });
@@ -155,6 +160,7 @@ async function loadItemData() {
     const artItem = (data.value as { artItem: ArtItemResponse }).artItem;
     itemData.value = {
       name: artItem.name,
+      mac: artItem.mac,
       description: artItem.description,
       owner: artItem.owner,
     }
@@ -342,6 +348,7 @@ async function editItem() {
 
     const bodyData = {
       name: itemData.value.name,
+      mac: itemData.value.mac,
       description: itemData.value.description,
       owner: itemData.value.owner,
       imagePaths: imgPaths,

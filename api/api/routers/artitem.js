@@ -66,6 +66,7 @@ router.get("/artsearch", async (req, res) => {
       searchResults.push({
         itemId: targetArtItem.itemId,
         name: targetArtItem.name,
+        mac: targetArtItem.mac,
         owner: targetArtItem.owner,
         image: targetArtItem.imagePaths[0],
       });
@@ -76,6 +77,7 @@ router.get("/artsearch", async (req, res) => {
         searchResults.push({
           itemId: item.itemId,
           name: item.name,
+          mac: item.mac,
           owner: item.owner,
           image: item.imagePaths[0],
         });
@@ -160,6 +162,7 @@ router.post("/artitem/add", json(), async (req, res) => {
     const newArtItem = new ArtItemModel({
       itemId: nanoid(),
       name: req.body.name,
+      mac: req.body.mac,
       description: req.body.description,
       owner: req.body.owner,
       certificatePath: req.body.certificatePath,
@@ -213,6 +216,10 @@ router.post("/artitem/edit/:id", json(), async (req, res) => {
 
     if (typeof req.body.name !== "undefined") {
       targetArtItem.name = req.body.name;
+    }
+
+    if (typeof req.body.mac !== "undefined") {
+      targetArtItem.mac = req.body.mac;
     }
 
     if (typeof req.body.description !== "undefined") {

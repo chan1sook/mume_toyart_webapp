@@ -5,6 +5,7 @@ const artItemSchema = new mongoose.Schema(
   {
     itemId: { type: String, unique: true },
     name: { type: String, required: true, index: true },
+    mac: { type: String, default: "", index: true },
     description: { type: String, default: "" },
     owner: { type: String, default: "", index: true },
     certificatePath: { type: String },

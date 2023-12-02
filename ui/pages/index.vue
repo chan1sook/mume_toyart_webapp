@@ -3,13 +3,12 @@
     <h3 class="transition-all duration-200 my-4 text-2xl transform scale-y-110 sm:text-3xl  font-bold">
       MUME Art-Toy
     </h3>
-    <div class="w-full max-w-md flex flex-row items-stretch">
+    <form class="w-full max-w-md flex flex-row items-stretch" @submit.prevent="quickSearchItems(searchKeyword)">
       <MumeInput type="search" label="Search" v-model="searchKeyword" input-classes="rounded-r-none" required />
-      <MumeButton btn-classes="rounded-l-none p-0 flex flex-col items-center" :disabled="!searchKeyword"
-        @click="quickSearchItems(searchKeyword)">
+      <MumeButton type="submit" btn-classes="rounded-l-none p-0 flex flex-col items-center" :disabled="!searchKeyword">
         <Icon name="mdi:magnify" size="1.5em" />
       </MumeButton>
-    </div>
+    </form>
     <MumeFixedBar></MumeFixedBar>
     <ClientOnly>
       <Transition name="fade">

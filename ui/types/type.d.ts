@@ -27,12 +27,14 @@ interface UploadFileResponse {
 interface ArtSearchResponse {
   itemId: string;
   name: string;
+  mac: string;
   owner: string;
   image?: string;
 }
 interface ArtItemResponse {
   itemId: string;
   name: string;
+  mac: string;
   description: string;
   owner: string;
   certificatePath: string;

@@ -1,18 +1,17 @@
 <template>
   <div class="px-4 py-2 bg-slate-700 border-b-2 shadow border-gray-400 flex flex-row gap-x-2">
-    <div class="flex-1 flex flex-row">
+    <form class="flex-1 flex flex-row" @submit.prevent="searchItem(props.modelValue)">
       <MumeInput type="search" placeholder="Search" :model-value="props.modelValue" input-classes="rounded-r-none"
         required @input="onChange" />
-      <MumeButton btn-classes="rounded-l-none p-0 flex flex-col items-center" :disabled="!props.modelValue"
-        @click="searchItem(props.modelValue)">
+      <MumeButton type="submit" btn-classes="rounded-l-none p-0 flex flex-col items-center" :disabled="!props.modelValue">
         <Icon name="mdi:magnify" size="1.5em" />
       </MumeButton>
-      <NuxtLink href="/admin/add-item" title="Add Item"
+      <NuxtLink v-if="isDevUser" href="/admin/add-item" title="Add Item"
         class="ml-2 transition duration-200 px-2 py-1 flex flex-row gap-x-1 items-center hover:bg-white/10 active:bg-white/20">
         <Icon name="uil:plus" size="1.5em" />
         <span class="hidden sm:inline">Add Item</span>
       </NuxtLink>
-    </div>
+    </form>
   </div>
 </template>
 
@@ -25,6 +24,8 @@ const emit = defineEmits<{
   (e: "update:modelValue", v: string): void;
   (e: "search", v: string): void;
 }>();
+
+const isDevUser = computed(() => isDeveloperUser(useSessionData().value));
 
 function onChange(ev: Event) {
   if (ev.target instanceof HTMLInputElement) {
