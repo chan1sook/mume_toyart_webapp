@@ -1,11 +1,12 @@
 import { Router, json } from "express";
+import urlJoin from "url-join";
+
 import APIError, {
   APIAuthRequiredError,
   APILackPermissionError,
   APIServerNoSessionError,
   APITargetArtItemNotFound,
 } from "../../utils/apierror.js";
-
 import ArtItemModel from "../../models/artitem.js";
 import { nanoid } from "nanoid";
 import {
@@ -49,6 +50,59 @@ router.get("/artitem/:id", async (req, res) => {
   }
 });
 
+router.get("/artmetadata/:id", async (req, res) => {
+  try {
+    const targetArtItem = await getArtItemByItemId(req.params.id);
+
+    if (!targetArtItem) {
+      throw APITargetArtItemNotFound;
+    }
+
+    const imgDirPath = process.env.IMG_UPLOAD_PATH || "upload/image/";
+    const fileName = targetArtItem.imagePaths[0];
+    let prefix = `${req.protocol}://${req.hostname}`;
+    if (req.socket.localPort !== 80) {
+      prefix += `:${req.socket.localPort}`;
+    }
+    const fullFilePath = urlJoin(prefix, imgDirPath, fileName);
+
+    res.status(200).json({
+      title: targetArtItem.name,
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: targetArtItem.name,
+        },
+        description: {
+          type: "string",
+          description: targetArtItem.description,
+        },
+        image: {
+          type: "string",
+          description: fullFilePath,
+        },
+      },
+    });
+  } catch (err) {
+    let code = 500;
+    let errorId;
+
+    if (err instanceof APIError) {
+      code = err.code;
+      errorId = err.errorId;
+    }
+
+    error(err.message, { name: "API", tags: [`${code}`] });
+    res.status(code).json({
+      status: "Error",
+      code,
+      errorId,
+      message: err.message,
+    });
+  }
+});
+
 router.get("/artsearch", async (req, res) => {
   try {
     const targetArtItem = req.query.keyword
@@ -69,6 +123,7 @@ router.get("/artsearch", async (req, res) => {
         mac: targetArtItem.mac,
         owner: targetArtItem.owner,
         image: targetArtItem.imagePaths[0],
+        nftId: targetArtItem.nftId,
       });
     }
 
@@ -80,6 +135,7 @@ router.get("/artsearch", async (req, res) => {
           mac: item.mac,
           owner: item.owner,
           image: item.imagePaths[0],
+          nftId: item.nftId,
         });
       }
     }
@@ -167,6 +223,7 @@ router.post("/artitem/add", json(), async (req, res) => {
       owner: req.body.owner,
       certificatePath: req.body.certificatePath,
       imagePaths: req.body.imagePaths,
+      nftId: req.body.nftId,
     });
 
     await newArtItem.save();
@@ -232,6 +289,10 @@ router.post("/artitem/edit/:id", json(), async (req, res) => {
 
     if (typeof req.body.imagePaths !== "undefined") {
       targetArtItem.imagePaths = req.body.imagePaths;
+    }
+
+    if (typeof req.body.nftId !== "undefined") {
+      targetArtItem.nftId = req.body.nftId;
     }
 
     await targetArtItem.save();

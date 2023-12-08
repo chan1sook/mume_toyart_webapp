@@ -9,6 +9,9 @@ export default defineNuxtConfig({
       autoprefixer: {},
     },
   },
+  runtimeConfig: {
+    USE_REALCHAIN: false,
+  },
   build: {
     transpile: ["vue-toastification"],
   },

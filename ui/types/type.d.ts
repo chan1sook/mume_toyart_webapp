@@ -30,6 +30,7 @@ interface ArtSearchResponse {
   mac: string;
   owner: string;
   image?: string;
+  nftId?: number;
 }
 interface ArtItemResponse {
   itemId: string;
@@ -39,6 +40,7 @@ interface ArtItemResponse {
   owner: string;
   certificatePath: string;
   imagePaths: string[];
+  nftId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -46,4 +48,18 @@ interface ArtItemResponse {
 interface ArtHistoryResponse {
   action: string;
   createdAt: string;
+}
+
+interface EthTxReciptLogResonse {
+  fragment: {
+    name: string;
+  };
+  args: any[];
+}
+
+interface NftInfomation {
+  owner: string;
+  tradable: boolean;
+  price: bigint;
+  uri: string;
 }

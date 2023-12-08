@@ -4,7 +4,8 @@
       MUME Art-Toy
     </h3>
     <form class="w-full max-w-md flex flex-row items-stretch" @submit.prevent="quickSearchItems(searchKeyword)">
-      <MumeInput type="search" label="Search" v-model="searchKeyword" input-classes="rounded-r-none" required />
+      <MumeInput type="search" label="Search" v-model="searchKeyword" class="flex-1" input-classes="rounded-r-none"
+        required />
       <MumeButton type="submit" btn-classes="rounded-l-none p-0 flex flex-col items-center" :disabled="!searchKeyword">
         <Icon name="mdi:magnify" size="1.5em" />
       </MumeButton>

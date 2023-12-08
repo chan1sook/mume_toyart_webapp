@@ -10,6 +10,7 @@ const artItemSchema = new mongoose.Schema(
     owner: { type: String, default: "", index: true },
     certificatePath: { type: String },
     imagePaths: [{ type: String, required: true }],
+    nftId: { type: String },
   },
   { timestamps: true }
 );

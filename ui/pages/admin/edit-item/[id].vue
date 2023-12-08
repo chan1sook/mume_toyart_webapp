@@ -57,10 +57,60 @@
               </div>
             </div>
           </div>
-          <div class="pt-2">Owner</div>
-          <div>
-            <MumeInput v-model="itemData.owner" type="input" placeholder="Owner" />
-          </div>
+          <template v-if="alreadyHaveNft">
+            <div>NFT ID</div>
+            <div>
+              {{ nftId }}
+            </div>
+          </template>
+          <template v-else>
+            <div class="pt-2">NFT</div>
+            <div class="flex flex-row flex-wrap items-center gap-x-2">
+              <input id="with-nft" v-model="nftOptions.generated" type="checkbox" />
+              <label for="with-nft">Create Nft</label>
+            </div>
+            <template v-if="nftOptions.generated">
+              <div class="pt-2">Wallet</div>
+              <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center">
+                <ClientOnly>
+                  <w3m-button class="inline-block" />
+                </ClientOnly>
+                <span v-if="!useRealChain" class="text-red-200 capitalize">Dev Chain: For Testing Only</span>
+              </div>
+              <div class="pt-2">Price</div>
+              <div class="flex flex-col gap-y-1">
+                <div class="flex flex-row">
+                  <MumeInput v-model="nftOptions.price" type="number" min="0" step="1" class="flex-1"
+                    placeholder="Token Unit" inputClasses="rounded-r-none" :invalid="!isNftPriceValid" />
+                  <MumeSelect v-model="nftOptions.priceUnit" class="inline-flex" selectClasses="rounded-l-none">
+                    <option value="wei">Wei</option>
+                    <option value="gwei">GWei</option>
+                    <option value="ether">Ether</option>
+                  </MumeSelect>
+                </div>
+                <div v-if="isNftPriceValid">
+                  <div class="italic">{{ totalEthPrice }} JBC</div>
+                </div>
+              </div>
+              <div class="pt-2">Nft Validation</div>
+              <div>
+                <div v-if="isNftOptionsValid" class="flex flex-row gap-x-1 items-center" title="Valid">
+                  <Icon name="uil:check" size="2em" />
+                  <span class="hidden sm:block">Valid</span>
+                </div>
+                <div v-else class="flex flex-row gap-x-1 items-center" title="Invalid">
+                  <Icon name="uil:times" size="2em" />
+                  <span class="hidden sm:block">Invalid</span>
+                </div>
+              </div>
+            </template>
+            <template v-else>
+              <div class="pt-2">Owner</div>
+              <div>
+                <MumeInput v-model="itemData.owner" type="input" placeholder="Owner" />
+              </div>
+            </template>
+          </template>
           <div class="pt-2">Certificate</div>
           <div class="flex flex-col gap-y-1">
             <div class="flex flex-row gap-x-2 items-center">
@@ -83,7 +133,7 @@
       </form>
     </div>
     <Transition name="fade">
-      <MumeLoadingModal v-if="itemLoading || formLoading" />
+      <MumeLoadingModal v-if="itemLoading || formLoading" :loading-text="loadingText" />
     </Transition>
   </MumeContainer>
 </template>
@@ -91,6 +141,10 @@
 <script lang="ts" setup>
 import { useToast } from "vue-toastification";
 import { getImagePath } from "~/utils/path";
+import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/vue'
+import { BrowserProvider, Contract, parseUnits, formatUnits } from 'ethers'
+
+import { jbcchain, walletConnectId, metadata, getChainAbi } from "~/utils/eth"
 
 definePageMeta({
   middleware: ["auth-user", "auth-dev"],
@@ -102,6 +156,11 @@ useHead({
   title: `MUME Art-Toy | Edit Item #${id}`,
 });
 
+const web3Modal = createWeb3Modal({
+  ethersConfig: defaultConfig({ metadata }),
+  chains: [jbcchain],
+  projectId: walletConnectId,
+});
 const itemLoading = ref(true);
 
 const itemData = ref({
@@ -110,7 +169,13 @@ const itemData = ref({
   description: "",
   owner: "",
 });
-
+const nftId: Ref<string | undefined> = ref(undefined);
+const nftOptions = ref({
+  generated: false,
+  price: "0",
+  priceUnit: "wei",
+});
+const loadingText: Ref<string | undefined> = ref(undefined);
 const originalImagePaths: Ref<string[]> = ref([]);
 const imagePathDirty: Ref<boolean> = ref(false);
 const originalCertPath: Ref<string> = ref("");
@@ -118,8 +183,29 @@ const sortedImageLinks: Ref<BrowserUploadFileData[]> = ref([])
 const newCertificateFile: Ref<File | undefined> = ref(undefined);
 const formLoading = ref(false);
 
+const isNftOptionsValid = computed(() => {
+  const value = nftOptions.value;
+  if (alreadyHaveNft.value || !value.generated) {
+    return true;
+  }
+
+  return isWalletConnected.value && isNftPriceValid.value;
+})
+const useRealChain = computed(() => useRuntimeConfig().USE_REALCHAIN);
+const chainAbi = computed(() => getChainAbi(useRealChain.value));
+const isWalletConnected = computed(() => !!(web3Modal.getIsConnected() && web3Modal.getWalletProvider()));
+const isNftPriceValid = computed(() => {
+  const value = nftOptions.value;
+  try {
+    const ethValue = parseUnits(value.price, value.priceUnit);
+    return ethValue >= 0;
+  } catch (err) {
+    return false;
+  }
+})
+const alreadyHaveNft = computed(() => typeof nftId.value === "string")
 const isFormValid = computed(() => {
-  return itemData.value.name !== ""
+  return itemData.value.name !== "" && isNftOptionsValid.value;
 });
 
 const selectedImageFileText = computed(() => {
@@ -136,6 +222,13 @@ const selectedCertFileText = computed(() => {
   }
 
   return `Old: ${originalCertPath.value}`;
+})
+
+const totalEthPrice = computed(() => {
+  const price = nftOptions.value.price;
+  const priceUnit = nftOptions.value.priceUnit;
+  const weiValues = parseUnits(price, priceUnit);
+  return formatUnits(weiValues, "ether");
 })
 
 async function loadItemData() {
@@ -171,6 +264,7 @@ async function loadItemData() {
       };
     })
     originalCertPath.value = artItem.certificatePath;
+    nftId.value = artItem.nftId;
   } catch (err) {
     console.error(err);
 
@@ -333,18 +427,63 @@ async function uploadCert(file?: File) {
   }
 }
 
+async function mintNft(itemId: string) {
+  if (alreadyHaveNft.value || !nftOptions.value.generated) {
+    return;
+  }
+
+  const walletProvider = web3Modal.getWalletProvider()
+
+  if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+  if (!walletProvider) throw Error("WalletProvider not found")
+
+  const ethersProvider = new BrowserProvider(walletProvider);
+  const signer = await ethersProvider.getSigner();
+
+  const abi = chainAbi.value;
+  const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
+  const location = window.location;
+  let artUri = `${location.protocol}://${window.location.host}/mapi/artmetadata/${itemId}`;
+  console.log("artUri", artUri);
+
+
+  const txSent = await MumeArtToyContract.mint(
+    web3Modal.getAddress(),
+    parseUnits(nftOptions.value.price, nftOptions.value.priceUnit),
+    artUri
+  );
+  const receipt = await txSent.wait();
+  const log = (receipt.logs as EthTxReciptLogResonse[]).find((ele) => ele.fragment.name === "MetadataUpdate");
+
+  if (log) {
+    console.log(log.args[0]);
+    return log.args[0] as (bigint | undefined);
+  }
+  return undefined;
+}
+
 async function editItem() {
   if (!isFormValid.value || formLoading.value) {
     return;
   }
 
-  formLoading.value = true;
   try {
+    loadingText.value = "Upload Images";
+    formLoading.value = true;
     const imgPaths = await Promise.all(sortedImageLinks.value.map(uploadImage));
+
     let certPath = originalCertPath.value;
     if (newCertificateFile.value) {
+      loadingText.value = "Upload Cert";
       certPath = await uploadCert(newCertificateFile.value);
     }
+
+    let nftId: bigint | undefined;
+    if (!alreadyHaveNft.value && nftOptions.value.generated) {
+      loadingText.value = "Mining NFT";
+      nftId = await mintNft(id.toString());
+    }
+
 
     const bodyData = {
       name: itemData.value.name,
@@ -353,8 +492,10 @@ async function editItem() {
       owner: itemData.value.owner,
       imagePaths: imgPaths,
       certificatePath: certPath,
+      nftId: typeof nftId !== "undefined" ? nftId.toString() : undefined
     }
 
+    loadingText.value = "Update Item Data";
     const { data, error } = await useFetch(`/mapi/artitem/edit/${id}`, {
       method: "post",
       body: bodyData,

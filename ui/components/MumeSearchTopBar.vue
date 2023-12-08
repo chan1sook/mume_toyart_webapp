@@ -1,8 +1,8 @@
 <template>
   <div class="px-4 py-2 bg-slate-700 border-b-2 shadow border-gray-400 flex flex-row gap-x-2">
     <form class="flex-1 flex flex-row" @submit.prevent="searchItem(props.modelValue)">
-      <MumeInput type="search" placeholder="Search" :model-value="props.modelValue" input-classes="rounded-r-none"
-        required @input="onChange" />
+      <MumeInput type="search" placeholder="Search" :model-value="props.modelValue" class="flex-1"
+        input-classes="rounded-r-none" required @input="onChange" />
       <MumeButton type="submit" btn-classes="rounded-l-none p-0 flex flex-col items-center" :disabled="!props.modelValue">
         <Icon name="mdi:magnify" size="1.5em" />
       </MumeButton>
