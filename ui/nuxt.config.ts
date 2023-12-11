@@ -10,7 +10,10 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    USE_REALCHAIN: false,
+    public: {
+      USE_DEVCHAIN: true,
+      CHAIN_VERSION: 2,
+    },
   },
   build: {
     transpile: ["vue-toastification"],

@@ -27,7 +27,13 @@
               </span>
               {{ item.mac || '-' }}
             </div>
-            <div class="text-sm">
+            <div v-if="item.nftId" class="text-sm">
+              <span title="NFT #:">
+                <Icon name="ri:nft-fill" />:
+              </span>
+              {{ item.nftId }}
+            </div>
+            <div v-else class="text-sm">
               <span title="Owner">
                 <Icon name="uil:user" />:
               </span>

@@ -31,6 +31,8 @@ interface ArtSearchResponse {
   owner: string;
   image?: string;
   nftId?: number;
+  devChain: boolean;
+  chainVersion: number;
 }
 interface ArtItemResponse {
   itemId: string;
@@ -41,6 +43,8 @@ interface ArtItemResponse {
   certificatePath: string;
   imagePaths: string[];
   nftId?: string;
+  devChain: boolean;
+  chainVersion: number;
   createdAt: string;
   updatedAt: string;
 }

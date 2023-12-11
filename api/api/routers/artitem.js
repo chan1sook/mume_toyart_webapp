@@ -1,6 +1,7 @@
 import { Router, json } from "express";
 import urlJoin from "url-join";
 
+import { isUseDevchain, getChainVersion } from "../../configs/runtime.js";
 import APIError, {
   APIAuthRequiredError,
   APILackPermissionError,
@@ -60,29 +61,23 @@ router.get("/artmetadata/:id", async (req, res) => {
 
     const imgDirPath = process.env.IMG_UPLOAD_PATH || "upload/image/";
     const fileName = targetArtItem.imagePaths[0];
-    let prefix = `${req.protocol}://${req.hostname}`;
-    if (req.socket.localPort !== 80) {
-      prefix += `:${req.socket.localPort}`;
+    let prefix = process.env.NFT_METADATA_URI;
+
+    if (!prefix) {
+      prefix = `${req.protocol}://${req.hostname}`;
+      if (req.socket.localPort !== 80) {
+        prefix += `:${req.socket.localPort}`;
+      }
     }
     const fullFilePath = urlJoin(prefix, imgDirPath, fileName);
 
     res.status(200).json({
-      title: targetArtItem.name,
-      type: "object",
-      properties: {
-        name: {
-          type: "string",
-          description: targetArtItem.name,
-        },
-        description: {
-          type: "string",
-          description: targetArtItem.description,
-        },
-        image: {
-          type: "string",
-          description: fullFilePath,
-        },
-      },
+      name: targetArtItem.name,
+      description: targetArtItem.description,
+      image: fullFilePath,
+      mac: targetArtItem.mac,
+      nanoid: targetArtItem.itemId,
+      createdAt: targetArtItem.createdAt,
     });
   } catch (err) {
     let code = 500;
@@ -124,6 +119,8 @@ router.get("/artsearch", async (req, res) => {
         owner: targetArtItem.owner,
         image: targetArtItem.imagePaths[0],
         nftId: targetArtItem.nftId,
+        devChain: targetArtItem.devChain,
+        chainVersion: targetArtItem.chainVersion,
       });
     }
 
@@ -136,6 +133,8 @@ router.get("/artsearch", async (req, res) => {
           owner: item.owner,
           image: item.imagePaths[0],
           nftId: item.nftId,
+          devChain: item.devChain,
+          chainVersion: item.chainVersion,
         });
       }
     }
@@ -224,6 +223,8 @@ router.post("/artitem/add", json(), async (req, res) => {
       certificatePath: req.body.certificatePath,
       imagePaths: req.body.imagePaths,
       nftId: req.body.nftId,
+      devChain: req.body.devChain || isUseDevchain(),
+      chainVersion: req.body.chainVersion || getChainVersion(),
     });
 
     await newArtItem.save();
@@ -293,6 +294,8 @@ router.post("/artitem/edit/:id", json(), async (req, res) => {
 
     if (typeof req.body.nftId !== "undefined") {
       targetArtItem.nftId = req.body.nftId;
+      targetArtItem.devChain = req.body.devChain || isUseDevchain();
+      targetArtItem.chainVersion = req.body.chainVersion || getChainVersion();
     }
 
     await targetArtItem.save();

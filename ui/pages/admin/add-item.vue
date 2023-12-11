@@ -58,11 +58,16 @@
           </div>
           <template v-if="nftOptions.generated">
             <div class="pt-2">Wallet</div>
-            <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center">
-              <ClientOnly>
-                <w3m-button class="inline-block" />
-              </ClientOnly>
-              <span v-if="!useRealChain" class="text-red-200 capitalize">Dev Chain: For Testing Only</span>
+            <div>
+              <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center">
+                <ClientOnly>
+                  <w3m-button class="inline-block" />
+                </ClientOnly>
+                <span v-if="useDevChain" class="text-red-200 capitalize">Dev Chain: For Testing Only</span>
+              </div>
+              <template v-if="!isSelectedChainCorrect">
+                <div class="italic">Not in JIB Chain!</div>
+              </template>
             </div>
             <div class="pt-2">Price</div>
             <div class="flex flex-col gap-y-1">
@@ -79,7 +84,7 @@
                 <div class="italic">{{ totalEthPrice }} JBC</div>
               </div>
             </div>
-            <div class="pt-2">Nft Validation</div>
+            <div class="pt-2">NFT Validation</div>
             <div>
               <div v-if="isNftOptionsValid" class="flex flex-row gap-x-1 items-center" title="Valid">
                 <Icon name="uil:check" size="2em" />
@@ -161,11 +166,15 @@ const isNftOptionsValid = computed(() => {
     return true;
   }
 
-  return isWalletConnected.value && isNftPriceValid.value;
+  return isWalletConnected.value && isSelectedChainCorrect.value && isNftPriceValid.value;
 })
-const useRealChain = computed(() => useRuntimeConfig().USE_REALCHAIN);
-const chainAbi = computed(() => getChainAbi(useRealChain.value));
-const isWalletConnected = computed(() => !!(web3Modal.getIsConnected() && web3Modal.getWalletProvider()));
+const useDevChain = computed(() => useRuntimeConfig().public.USE_DEVCHAIN);
+const chainVersion = computed(() => useRuntimeConfig().public.CHAIN_VERSION);
+const chainAbi = computed(() => {
+  return getChainAbi(useDevChain.value, chainVersion.value);
+});
+const isWalletConnected = ref(false);
+const isSelectedChainCorrect = ref(false);
 const isNftPriceValid = computed(() => {
   const value = nftOptions.value;
   try {
@@ -354,6 +363,8 @@ async function addItemFetch(imgPaths: (string | null)[], certPath: string) {
 async function updateItemNft(id: string, nftId: bigint) {
   const bodyData = {
     nftId: nftId.toString(),
+    devChain: useDevChain.value,
+    chainVersion: chainVersion.value,
   }
 
   const { data, error } = await useFetch(`/mapi/artitem/edit/${id}`, {
@@ -390,16 +401,13 @@ async function mintNft(itemId: string) {
 
   const abi = chainAbi.value;
   const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
-  const location = window.location;
-  let artUri = `${location.protocol}://${window.location.host}/mapi/artmetadata/${itemId}`;
-  console.log("artUri", artUri);
-
 
   const txSent = await MumeArtToyContract.mint(
     web3Modal.getAddress(),
     parseUnits(nftOptions.value.price, nftOptions.value.priceUnit),
-    artUri
+    itemId
   );
+
   const receipt = await txSent.wait();
   const log = (receipt.logs as EthTxReciptLogResonse[]).find((ele) => ele.fragment.name === "MetadataUpdate");
 
@@ -450,6 +458,18 @@ async function addItem() {
     formLoading.value = false;
   }
 }
+
+let timerId: NodeJS.Timeout | undefined;
+onMounted(() => {
+  timerId = setInterval(() => {
+    isWalletConnected.value = !!(web3Modal.getIsConnected() && web3Modal.getWalletProvider());
+    isSelectedChainCorrect.value = web3Modal.getChainId() === jbcchain.chainId;
+  }, 200);
+})
+
+onBeforeUnmount(() => {
+  clearInterval(timerId);
+});
 
 </script>
 

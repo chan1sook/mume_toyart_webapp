@@ -26,3 +26,19 @@ export function toggleProductionMode(isProduction) {
 
   return process.env.NODE_ENV;
 }
+
+export function isUseDevchain() {
+  return !isProductionMode();
+}
+
+export function getChainVersion() {
+  const value = isProductionMode()
+    ? process.env.CHAIN_VERSION
+    : process.env.DEV_CHAIN_VERSION;
+
+  const n = parseInt(value || "1");
+  if (!Number.isInteger(n) || n < 1) {
+    return 1;
+  }
+  return n;
+}

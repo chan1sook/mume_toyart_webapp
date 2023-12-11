@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import MongooseDelete from "mongoose-delete";
+import { isUseDevchain, getChainVersion } from "../configs/runtime.js";
 
 const artItemSchema = new mongoose.Schema(
   {
@@ -11,6 +12,8 @@ const artItemSchema = new mongoose.Schema(
     certificatePath: { type: String },
     imagePaths: [{ type: String, required: true }],
     nftId: { type: String },
+    devChain: { type: Boolean, default: isUseDevchain(), index: true },
+    chainVersion: { type: Number, default: getChainVersion(), index: true },
   },
   { timestamps: true }
 );

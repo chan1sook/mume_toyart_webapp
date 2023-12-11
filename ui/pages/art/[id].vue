@@ -85,13 +85,23 @@
           <div v-if="currentTab === 'nft'"
             class="border border-gray-400 rounded-b-md px-2 py-2 custom-grid gap-x-2 gap-y-1">
             <template v-if="typeof itemData.nftId === 'string'">
-              <div class="pt-2">Wallet</div>
-              <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center">
-                <ClientOnly>
-                  <w3m-button class="inline-block" />
-                </ClientOnly>
-                <span v-if="!useRealChain" class="text-red-200 capitalize">Dev Chain: For Testing Only</span>
-              </div>
+              <template v-if="nftNotFound">
+                <div class="col-span-2 text-center text-2xl italic">NFT not exists</div>
+              </template>
+              <template v-else>
+                <div class="pt-2">Wallet</div>
+                <div>
+                  <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center">
+                    <ClientOnly>
+                      <w3m-button class="inline-block" />
+                    </ClientOnly>
+                    <span v-if="useDevChain" class="text-red-200 capitalize">Dev Chain: For Testing Only</span>
+                  </div>
+                  <template v-if="!isSelectedChainCorrect">
+                    <div class="italic">Not in JIB Chain!</div>
+                  </template>
+                </div>
+              </template>
               <template v-if="nftData">
                 <div class="pt-2">Owner</div>
                 <div>
@@ -249,6 +259,7 @@ const nftLoading = ref(false);
 const itemData: Ref<ArtItemResponse | undefined> = ref(undefined);
 const historyList: Ref<ArtHistoryResponse[]> = ref([]);
 const nftData: Ref<NftInfomation | undefined> = ref(undefined);
+const nftNotFound = ref(false);
 const nftOptions = ref({
   edited: false,
   price: "",
@@ -269,9 +280,14 @@ const tabs = ref([{
 const currentTab = ref(tabs.value[0].id);
 
 const isDevUser = computed(() => isDeveloperUser(sessionData.value));
-const useRealChain = computed(() => useRuntimeConfig().USE_REALCHAIN);
-const chainAbi = computed(() => getChainAbi(useRealChain.value));
+const useDevChain = computed(() => !!itemData.value ? itemData.value.devChain : useRuntimeConfig().public.USE_DEVCHAIN);
+const chainVersion = computed(() => !!itemData.value ? itemData.value.chainVersion : useRuntimeConfig().public.CHAIN_VERSION);
+const chainAbi = computed(() => {
+  return getChainAbi(useDevChain.value, chainVersion.value);
+});
 const isWalletConnected = ref(false);
+const isSelectedChainCorrect = ref(false);
+const isNftValid = computed(() => isWalletConnected.value && isSelectedChainCorrect.value);
 const isNftOwned = computed(() => web3Modal.getAddress()?.toLowerCase() === nftData.value?.owner.toLowerCase());
 const isTargetEthAddress = computed(() => isAddress(nftOptions.value.targetAddress))
 watch(isWalletConnected, (value) => {
@@ -449,6 +465,7 @@ async function loadNftData() {
   }
 
   loadingText.value = "Load NFT Data";
+  nftNotFound.value = false;
   nftLoading.value = true;
 
   try {
@@ -476,6 +493,8 @@ async function loadNftData() {
       message = err.message
     }
 
+    nftNotFound.value = true;
+
     useToast().error(message, {
       timeout: 5000
     });
@@ -485,7 +504,7 @@ async function loadNftData() {
 }
 
 async function buyNft() {
-  if (!isWalletConnected.value || !nftData.value || typeof itemData.value?.nftId !== 'string') {
+  if (!isNftValid.value || !nftData.value || typeof itemData.value?.nftId !== 'string') {
     return;
   }
 
@@ -526,7 +545,7 @@ async function buyNft() {
 }
 
 async function transferToken() {
-  if (!isWalletConnected.value || !nftData.value || typeof itemData.value?.nftId !== 'string') {
+  if (!isNftValid.value || !nftData.value || typeof itemData.value?.nftId !== 'string') {
     return;
   }
 
@@ -569,7 +588,7 @@ async function transferToken() {
 }
 
 async function toggleTradeableFlag() {
-  if (!isWalletConnected.value || !nftData.value || typeof itemData.value?.nftId !== 'string') {
+  if (!isNftValid.value || !nftData.value || typeof itemData.value?.nftId !== 'string') {
     return;
   }
 
@@ -611,7 +630,7 @@ async function toggleTradeableFlag() {
 }
 
 async function updatePrice() {
-  if (!isWalletConnected.value || !nftData.value || typeof itemData.value?.nftId !== 'string') {
+  if (!isNftValid.value || !nftData.value || typeof itemData.value?.nftId !== 'string') {
     return;
   }
 
@@ -657,6 +676,7 @@ let timerId: NodeJS.Timeout | undefined;
 onMounted(() => {
   timerId = setInterval(() => {
     isWalletConnected.value = !!(web3Modal.getIsConnected() && web3Modal.getWalletProvider());
+    isSelectedChainCorrect.value = web3Modal.getChainId() === jbcchain.chainId;
   }, 200);
 })
 
