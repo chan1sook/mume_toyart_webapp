@@ -263,7 +263,7 @@ const nftNotFound = ref(false);
 const nftOptions = ref({
   edited: false,
   price: "",
-  priceUnit: "wei",
+  priceUnit: "ether",
   targetAddress: "",
 });
 const historyLoading = ref(false);
@@ -522,10 +522,17 @@ async function buyNft() {
     const abi = chainAbi.value;
     const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
     const tx = await MumeArtToyContract.buyNft(
-      nftData.value.owner, itemData.value.nftId
+      nftData.value.owner, itemData.value.nftId, {
+      value: nftData.value.price.toString()
+    }
     );
     await tx.wait();
 
+    nftLoading.value = false;
+    useToast().success("NFT Purchased!", {
+      timeout: 5000
+    });
+    loadNftData();
   } catch (err) {
     let message = "Can't Buy NFT";
     if (err instanceof Error) {
@@ -535,13 +542,9 @@ async function buyNft() {
     useToast().error(message, {
       timeout: 5000
     });
-  }
 
-  nftLoading.value = false;
-  useToast().success("NFT Purchased!", {
-    timeout: 5000
-  });
-  loadNftData();
+    nftLoading.value = false;
+  }
 }
 
 async function transferToken() {
@@ -569,6 +572,12 @@ async function transferToken() {
     await tx.wait();
 
     nftOptions.value.targetAddress = "";
+
+    nftLoading.value = false;
+    useToast().success("NFT Transfered", {
+      timeout: 5000
+    });
+    loadNftData();
   } catch (err) {
     let message = "Can't Transfer NFT";
     if (err instanceof Error) {
@@ -578,13 +587,8 @@ async function transferToken() {
     useToast().error(message, {
       timeout: 5000
     });
+    nftLoading.value = false;
   }
-
-  nftLoading.value = false;
-  useToast().success("NFT Transfered", {
-    timeout: 5000
-  });
-  loadNftData();
 }
 
 async function toggleTradeableFlag() {
@@ -611,22 +615,24 @@ async function toggleTradeableFlag() {
       itemData.value.nftId, nextTradableFlag
     );
     await tx.wait();
+
+    nftLoading.value = false;
+    useToast().success("NFT Updated", {
+      timeout: 5000
+    });
+    loadNftData();
   } catch (err) {
     let message = "Can't Set Tradable Flag";
     if (err instanceof Error) {
       message = err.message
     }
 
+    nftLoading.value = false;
     useToast().error(message, {
       timeout: 5000
     });
   }
 
-  nftLoading.value = false;
-  useToast().success("NFT Updated", {
-    timeout: 5000
-  });
-  loadNftData();
 }
 
 async function updatePrice() {
@@ -654,6 +660,11 @@ async function updatePrice() {
     await tx.wait();
 
     cancelEditPrice();
+    nftLoading.value = false;
+    useToast().success("NFT Updated", {
+      timeout: 5000
+    });
+    loadNftData();
   } catch (err) {
     let message = "Can't Set Price";
     if (err instanceof Error) {
@@ -663,13 +674,8 @@ async function updatePrice() {
     useToast().error(message, {
       timeout: 5000
     });
+    nftLoading.value = false;
   }
-
-  nftLoading.value = false;
-  useToast().success("NFT Updated", {
-    timeout: 5000
-  });
-  loadNftData();
 }
 
 let timerId: NodeJS.Timeout | undefined;

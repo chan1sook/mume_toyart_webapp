@@ -2,10 +2,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deployer } = await getNamedAccounts();
   const { deploy } = deployments;
 
-  await deploy("MumeArtToyNftB4", {
+  await deploy("MumeArtToyNft1", {
     from: deployer,
     log: true,
     deterministicDeployment: false,
   });
 };
-module.exports.tags = ["MumeArtToyNftB4"];
+module.exports.tags = ["MumeArtToyNft1"];

@@ -20,15 +20,13 @@ export function startApiService(port = 4000) {
   const sessionMiddleware = session(redisClient);
 
   app.use(sessionMiddleware);
-  app.use(
-    cors({
-      credentials: true,
-      origin: function (origin, callback) {
-        callback(null, true);
-      },
-    })
-  );
+  app.use(cors());
   app.use(helmet({}));
+
+  app.use("/upload", (_, res, next) => {
+    res.set("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  });
 
   app.use(
     "/upload/img",

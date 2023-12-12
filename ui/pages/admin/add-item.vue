@@ -155,7 +155,7 @@ const itemData = ref({
 const nftOptions = ref({
   generated: false,
   price: "0",
-  priceUnit: "wei",
+  priceUnit: "ether",
 });
 const sortedImageLinks: Ref<BrowserUploadFileData[]> = ref([])
 const certificateFile: Ref<File | undefined> = ref(undefined);

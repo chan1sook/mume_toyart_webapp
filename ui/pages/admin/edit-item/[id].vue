@@ -20,7 +20,7 @@
           </div>
           <div class="pt-2">Description</div>
           <div>
-            <MumeTextArea v-model="itemData.name" type="input" placeholder="Description" required />
+            <MumeTextArea v-model="itemData.description" type="input" placeholder="Description" required />
           </div>
           <div class="pt-2">Preview Images</div>
           <div class="flex flex-col gap-y-1">
@@ -180,7 +180,7 @@ const nftId: Ref<string | undefined> = ref(undefined);
 const nftOptions = ref({
   generated: false,
   price: "0",
-  priceUnit: "wei",
+  priceUnit: "ether",
 });
 const loadingText: Ref<string | undefined> = ref(undefined);
 const originalImagePaths: Ref<string[]> = ref([]);

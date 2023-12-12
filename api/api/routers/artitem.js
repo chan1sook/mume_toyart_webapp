@@ -61,15 +61,19 @@ router.get("/artmetadata/:id", async (req, res) => {
 
     const imgDirPath = process.env.IMG_UPLOAD_PATH || "upload/image/";
     const fileName = targetArtItem.imagePaths[0];
-    let prefix = process.env.NFT_METADATA_URI;
+    let fullFilePath = `https://picsum.photos/seed/${targetArtItem.itemId}/512/512`;
 
-    if (!prefix) {
-      prefix = `${req.protocol}://${req.hostname}`;
-      if (req.socket.localPort !== 80) {
-        prefix += `:${req.socket.localPort}`;
+    if (fileName) {
+      let prefix = process.env.NFT_METADATA_URI;
+
+      if (!prefix) {
+        prefix = `${req.protocol}://${req.hostname}`;
+        if (req.socket.localPort !== 80) {
+          prefix += `:${req.socket.localPort}`;
+        }
       }
+      fullFilePath = urlJoin(prefix, imgDirPath, fileName);
     }
-    const fullFilePath = urlJoin(prefix, imgDirPath, fileName);
 
     res.status(200).json({
       name: targetArtItem.name,
