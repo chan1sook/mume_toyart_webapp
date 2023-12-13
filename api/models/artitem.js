@@ -9,6 +9,7 @@ const artItemSchema = new mongoose.Schema(
     mac: { type: String, default: "", index: true },
     description: { type: String, default: "" },
     owner: { type: String, default: "", index: true },
+    categories: [{ type: String, required: true, index: true }],
     certificatePath: { type: String },
     imagePaths: [{ type: String, required: true }],
     nftId: { type: String },

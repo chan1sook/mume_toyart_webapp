@@ -11,8 +11,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      USE_DEVCHAIN: false,
-      CHAIN_VERSION: 1,
+      USE_DEVCHAIN: true,
+      CHAIN_VERSION: 3,
     },
   },
   build: {

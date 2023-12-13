@@ -22,6 +22,11 @@
           <div>
             <MumeTextArea v-model="itemData.description" type="input" placeholder="Description" required />
           </div>
+          <div class="pt-2">Categories</div>
+          <div>
+            <v-select v-model="itemData.categories" :options="allCategories" class="bg-slate-600" multiple
+              taggable></v-select>
+          </div>
           <div class="pt-2">Preview Images</div>
           <div class="flex flex-col gap-y-1">
             <div class="flex flex-row gap-x-2 items-center">
@@ -50,7 +55,7 @@
               </div>
               <div class="flex-1 flex flex-row">
                 <img :src="linkData.file ? linkData.link : getImagePath(linkData.link)"
-                  class="mx-auto h-20 border border-gray-400 rounded" />
+                  class="mx-auto h-20 border border-gray-400 rounded" loading="lazy" />
               </div>
               <div class="cursor-pointer" title="Remove" @click="removeImage(i)">
                 <Icon name="uil:trash-alt" size="2em" class="transition duration-200 text-gray-300 hover:text-white" />
@@ -100,11 +105,11 @@
               <div class="pt-2">NFT Validation</div>
               <div>
                 <div v-if="isNftOptionsValid" class="flex flex-row gap-x-1 items-center" title="Valid">
-                  <Icon name="uil:check" size="2em" />
+                  <Icon name="uil:check" size="1.5em" />
                   <span class="hidden sm:block">Valid</span>
                 </div>
                 <div v-else class="flex flex-row gap-x-1 items-center" title="Invalid">
-                  <Icon name="uil:times" size="2em" />
+                  <Icon name="uil:times" size="1.5em" />
                   <span class="hidden sm:block">Invalid</span>
                 </div>
               </div>
@@ -175,7 +180,9 @@ const itemData = ref({
   mac: "",
   description: "",
   owner: "",
+  categories: [] as string[],
 });
+const originalCategories: Ref<string[]> = ref([]);
 const nftId: Ref<string | undefined> = ref(undefined);
 const nftOptions = ref({
   generated: false,
@@ -190,6 +197,16 @@ const sortedImageLinks: Ref<BrowserUploadFileData[]> = ref([])
 const newCertificateFile: Ref<File | undefined> = ref(undefined);
 const formLoading = ref(false);
 
+const allCategories = computed(() => {
+  const categories: string[] = [];
+  for (const oldCatergory of originalCategories.value) {
+    if (!itemData.value.categories.includes(oldCatergory)) {
+      categories.push(oldCatergory);
+    }
+  }
+
+  return categories;
+})
 const isNftOptionsValid = computed(() => {
   const value = nftOptions.value;
   if (alreadyHaveNft.value || !value.generated) {
@@ -267,7 +284,9 @@ async function loadItemData() {
       mac: artItem.mac,
       description: artItem.description,
       owner: artItem.owner,
+      categories: artItem.categories,
     }
+    originalCategories.value = artItem.categories.slice();
     originalImagePaths.value = artItem.imagePaths;
     sortedImageLinks.value = artItem.imagePaths.map((ele) => {
       return {
@@ -463,7 +482,6 @@ async function mintNft(itemId: string) {
   const log = (receipt.logs as EthTxReciptLogResonse[]).find((ele) => ele.fragment.name === "MetadataUpdate");
 
   if (log) {
-    console.log(log.args[0]);
     return log.args[0] as (bigint | undefined);
   }
   return undefined;
@@ -497,6 +515,7 @@ async function editItem() {
       mac: itemData.value.mac,
       description: itemData.value.description,
       owner: itemData.value.owner,
+      categories: itemData.value.categories,
       imagePaths: imgPaths,
       certificatePath: certPath,
       nftId: typeof nftId !== "undefined" ? nftId.toString() : undefined,
@@ -560,5 +579,29 @@ loadItemData();
 .custom-grid {
   display: grid;
   grid-template-columns: max-content auto;
+}
+
+:deep(*) {
+  --vs-controls-color: theme("borderColor.white");
+  --vs-border-color: theme("borderColor.gray.400");
+  --vs-search-input-bg: theme("backgroundColor.slate.600");
+  --vs-dropdown-bg: theme("backgroundColor.slate.600");
+  --vs-dropdown-option-color: theme("textColor.white");
+
+  --vs-selected-bg: theme("backgroundColor.slate.600");
+  --vs-selected-color: theme("textColor.white");
+  --vs-selected-border-color: theme("borderColor.gray.400");
+
+
+  --vs-dropdown-option--active-bg: theme("backgroundColor.slate.500");
+
+}
+
+:deep(.vs__dropdown-toggle) {
+  @apply transition duration-200;
+}
+
+:deep(.vs__dropdown-toggle:hover) {
+  @apply border-white;
 }
 </style>

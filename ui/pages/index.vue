@@ -10,6 +10,11 @@
         <Icon name="mdi:magnify" size="1.5em" />
       </MumeButton>
     </form>
+    <div class="flex flex-row justify-center my-2">
+      <NuxtLink href="/products">
+        Browse All Products
+      </NuxtLink>
+    </div>
     <MumeFixedBar></MumeFixedBar>
     <ClientOnly>
       <Transition name="fade">
@@ -24,7 +29,7 @@ const searchKeyword = ref("");
 const searchLoading = ref(false);
 
 async function quickSearchItems(keyword: string) {
-  if (!keyword) {
+  if (!keyword || searchLoading.value) {
     return;
   }
 

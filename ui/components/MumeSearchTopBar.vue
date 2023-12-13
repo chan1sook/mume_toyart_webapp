@@ -6,6 +6,11 @@
       <MumeButton type="submit" btn-classes="rounded-l-none p-0 flex flex-col items-center" :disabled="!props.modelValue">
         <Icon name="mdi:magnify" size="1.5em" />
       </MumeButton>
+      <NuxtLink href="/products" title="Browse"
+        class="ml-2 transition duration-200 px-2 py-1 flex flex-row gap-x-1 items-center hover:bg-white/10 active:bg-white/20">
+        <Icon name="uil:folder-open" size="1.5em" />
+        <span class="hidden sm:inline">Browse</span>
+      </NuxtLink>
       <NuxtLink v-if="isDevUser" href="/admin/add-item" title="Add Item"
         class="ml-2 transition duration-200 px-2 py-1 flex flex-row gap-x-1 items-center hover:bg-white/10 active:bg-white/20">
         <Icon name="uil:plus" size="1.5em" />

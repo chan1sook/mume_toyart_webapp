@@ -9,6 +9,7 @@ import { getRedisClient } from "../services/redis.js";
 import indexRouter from "./routers/index.js";
 import userRouter from "./routers/user.js";
 import artItemRouter from "./routers/artitem.js";
+import artQueryRouter from "./routers/artquery.js";
 import uploadRouter from "./routers/upload.js";
 import APIError from "../utils/apierror.js";
 import { error } from "console";
@@ -41,6 +42,7 @@ export function startApiService(port = 4000) {
   app.use(userRouter);
   app.use(uploadRouter);
   app.use(artItemRouter);
+  app.use(artQueryRouter);
 
   app.use((err, req, res, next) => {
     let code = 500;

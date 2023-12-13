@@ -32,11 +32,33 @@ export function isUseDevchain() {
 }
 
 export function getChainVersion() {
-  const value = isProductionMode()
-    ? process.env.CHAIN_VERSION
-    : process.env.DEV_CHAIN_VERSION;
+  return isProductionMode() ? getProdChainVersion() : getDevChainVersion();
+}
+
+export function getProdChainVersion() {
+  const value = process.env.CHAIN_VERSION;
 
   const n = parseInt(value || "1");
+  if (!Number.isInteger(n) || n < 1) {
+    return 1;
+  }
+  return n;
+}
+
+export function getDevChainVersion() {
+  const value = process.env.DEV_CHAIN_VERSION;
+
+  const n = parseInt(value || "1");
+  if (!Number.isInteger(n) || n < 1) {
+    return 1;
+  }
+  return n;
+}
+
+export function getQueryLimits() {
+  const value = process.env.QUERY_LIMITS;
+
+  const n = parseInt(value || "2000");
   if (!Number.isInteger(n) || n < 1) {
     return 1;
   }

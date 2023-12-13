@@ -24,7 +24,16 @@ interface UploadFileResponse {
   path: string;
 }
 
+interface ArtCategoriesResponse {
+  totals: number;
+  uncategorized: number;
+  categories: {
+    [x: string]: number;
+  };
+}
+
 interface ArtSearchResponse {
+  _id: string;
   itemId: string;
   name: string;
   mac: string;
@@ -42,6 +51,7 @@ interface ArtItemResponse {
   owner: string;
   certificatePath: string;
   imagePaths: string[];
+  categories: string[];
   nftId?: string;
   devChain: boolean;
   chainVersion: number;

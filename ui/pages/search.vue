@@ -3,43 +3,31 @@
     <MumeSearchTopBar v-model="searchKeyword" @search="fullSearchItems" />
     <div class="flex-1 flex flex-col overflow-y-auto">
       <div class="w-full p-4 flex flex-col justify-center items-center gap-y-1">
-        <h3 class="transition-all duration-200 my-4 text-2xl transform scale-y-110 sm:text-3xl font-bold">
+        <h3 class="transition-all duration-200 mt-4 mb-2 text-xl transform scale-y-110 sm:text-2xl font-bold">
           Search Result
         </h3>
+        <div class="mb-2 w-full max-w-3xl flex flex-row gap-x-2 items-center">
+          <MumeInput v-model="nameFilters" placeholder="Filters" class="flex-1"></MumeInput>
+        </div>
         <template v-if="!searchLoading">
           <div v-if="searchResults.length === 0">
-            Not found items with keyword "{{ lastSearchKeyword }}"
+            Items not found
+          </div>
+          <div v-else-if="filterSearchResults.length > 0 && !nameFilters">
+            Found {{ searchResults.length }} item(s)
           </div>
           <div v-else>
-            Found {{ searchResults.length }} item(s)
+            Found {{ filterSearchResults.length }} item(s) (Total: {{ searchResults.length }})
           </div>
         </template>
         <div class="flex flex-row justify-center flex-wrap gap-x-2 gap-y-1">
-          <div v-for="item of searchResults"
-            class="transition duration-200 w-48 px-2 py-2 flex flex-col items-center cursor-pointer hover:bg-white/10"
-            @click="goToItemPage(item.itemId)">
-            <img :src="item.image ? getImagePath(item.image) : getFakeImagePath('0')"
-              class="h-20 border border-gray-400 rounded my-2" />
-            <div class="my-1">{{ item.name }}</div>
-            <div class="text-sm">
-              <span title="MAC">
-                <Icon name="material-symbols:network-node" />:
-              </span>
-              {{ item.mac || '-' }}
-            </div>
-            <div v-if="item.nftId" class="text-sm">
-              <span title="NFT #:">
-                <Icon name="ri:nft-fill" />:
-              </span>
-              {{ item.nftId }}
-            </div>
-            <div v-else class="text-sm">
-              <span title="Owner">
-                <Icon name="uil:user" />:
-              </span>
-              {{ item.owner || '-' }}
-            </div>
-          </div>
+          <MumeArtItemContainer v-for="item of filterSearchResults" :item="item" @click="goToItemPage" />
+        </div>
+        <div class="my-2">
+          <MumeButton @click="searchMoreProducts">
+            <template v-if="searchResults.length > 0">Load More Items</template>
+            <template v-else>Refresh</template>
+          </MumeButton>
         </div>
       </div>
     </div>
@@ -53,17 +41,40 @@
 </template>
 
 <script setup lang="ts">
-import { getImagePath, getFakeImagePath } from "~/utils/path";
-
 const { keyword: oldKeyword } = useRoute().query;
 const searchKeyword = ref(oldKeyword?.toString() || "");
+
+const title = computed(() => {
+  if (searchKeyword.value) {
+    return `MUME Art-Toy | Search - ${searchKeyword}`
+  } else {
+    return `MUME Art-Toy | Search`
+  }
+})
+
+useHead({
+  title: title,
+});
+
 const lastSearchKeyword = ref("");
 const searchLoading = ref(false);
 const goLoading = ref(false);
 const searchResults: Ref<ArtSearchResponse[]> = ref([]);
+const nameFilters = ref("");
 
+const filterSearchResults = computed(() => {
+  const keyword = nameFilters.value.toLocaleLowerCase();
+  const validProducts: ArtSearchResponse[] = [];
+  for (const product of searchResults.value) {
+    if (product.name.toLocaleLowerCase().startsWith(keyword)) {
+      validProducts.push(product);
+    }
+  }
 
-async function fullSearchItems(keyword: string) {
+  return validProducts;
+});
+
+async function fullSearchItems(keyword: string, nextfrom?: string, appended?: boolean) {
   if (!keyword || searchLoading.value) {
     return;
   }
@@ -74,7 +85,7 @@ async function fullSearchItems(keyword: string) {
   try {
     const { data, error } = await useFetch(`/mapi/artsearch`, {
       query: {
-        keyword
+        keyword, nextfrom
       }
     });
 
@@ -91,7 +102,12 @@ async function fullSearchItems(keyword: string) {
       throw new Error("Can't Search Items");
     }
 
-    searchResults.value = (data.value as { items: ArtSearchResponse[] }).items;
+    const items = (data.value as { items: ArtSearchResponse[] }).items;
+    if (appended) {
+      searchResults.value = searchResults.value.concat(items);
+    } else {
+      searchResults.value = items;
+    }
   } catch (err) {
     console.error(err);
 
@@ -105,6 +121,15 @@ async function fullSearchItems(keyword: string) {
 
   searchLoading.value = false;
 }
+
+function searchMoreProducts() {
+  if (searchResults.value.length <= 0) {
+    fullSearchItems(searchKeyword.value);
+  } else {
+    fullSearchItems(searchKeyword.value, searchResults.value[searchResults.value.length - 1]._id, true);
+  }
+}
+
 
 function goToItemPage(itemId: string) {
   goLoading.value = true;

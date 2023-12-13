@@ -13,7 +13,7 @@
             </div>
             <div class=" flex-1 text-center">
               <img :src="getImagePath(itemData.imagePaths[selectedImgIndex])"
-                class="border border-gray-400 rounded h-[250px]" />
+                class="border border-gray-400 rounded h-[250px]" loading="lazy" />
             </div>
             <div class="cursor-pointer" title="Next Image" @click="selectImageIndex(selectedImgIndex + 1)">
               <Icon name="uil:angle-right-b" size="2em" class="transition duration-200 text-gray-300 hover:text-white" />
@@ -22,7 +22,7 @@
           <div class="flex flex-row overflow-x-auto w-full max-w-xl py-3">
             <div class="m-auto flex flex-row gap-x-2">
               <img v-for="(path, i) of itemData.imagePaths" :src="getImagePath(path)"
-                class="h-20 border border-gray-400 rounded cursor-pointer" @click="selectImageIndex(i)" />
+                class="h-20 border border-gray-400 rounded cursor-pointer" loading="lazy" @click="selectImageIndex(i)" />
             </div>
           </div>
         </template>
@@ -44,6 +44,18 @@
             <div>{{ itemData.mac || '-' }}</div>
             <div class="font-bold">Description</div>
             <div>{{ itemData.description }}</div>
+            <div class="font-bold">Categories</div>
+            <div class="flex flex-row flex-wrap items-center gap-x-2 gap-y-1">
+              <NuxtLink v-for="category of itemData.categories" :href="`/products/category/${category}`"
+                class="underline">
+                {{ category }}
+              </NuxtLink>
+              <template v-if="itemData.categories.length <= 0">
+                <NuxtLink href="/products/uncategorized" class="italic underline">
+                  Uncategorized
+                </NuxtLink>
+              </template>
+            </div>
             <div class="font-bold">Created at</div>
             <div>{{ formatDate(itemData.createdAt) }}</div>
             <div class="font-bold">Last Updated</div>
@@ -51,6 +63,18 @@
             <template v-if="typeof itemData.nftId !== 'string'">
               <div class="font-bold">Owner</div>
               <div>{{ itemData.owner || '-' }}</div>
+            </template>
+            <template v-else>
+              <div class="font-bold">Blockscan</div>
+              <div>
+                <NuxtLink :href="formatBlockscanLink(itemData.nftId)" external class="underline mr-2">
+                  {{ formatBlockscanLink(itemData.nftId) }}
+                </NuxtLink>
+                <span title="Copy Link">
+                  <Icon name="uil:copy" class="cursor-pointer" @click="copyText(formatBlockscanLink(itemData.nftId))" />
+
+                </span>
+              </div>
             </template>
             <div class="font-bold">Certificate</div>
             <div>
@@ -89,6 +113,16 @@
                 <div class="col-span-2 text-center text-2xl italic">NFT not exists</div>
               </template>
               <template v-else>
+                <div>Blockscan</div>
+                <div>
+                  <NuxtLink :href="formatBlockscanLink(itemData.nftId)" external class="underline mr-2">
+                    {{ formatBlockscanLink(itemData.nftId) }}
+                  </NuxtLink>
+                  <span title="Copy Link">
+                    <Icon name="uil:copy" class="cursor-pointer" @click="copyText(formatBlockscanLink(itemData.nftId))" />
+
+                  </span>
+                </div>
                 <div class="pt-2">Wallet</div>
                 <div>
                   <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center">
@@ -170,11 +204,11 @@
                 <div>
                   <div class="flex flex-row gap-x-2">
                     <div v-if="nftData.tradable" class="flex flex-row gap-x-1 items-center" title="Tradeable">
-                      <Icon name="uil:check" size="2em" />
+                      <Icon name="uil:check" size="1.5em" />
                       <span class="hidden sm:block">Tradeable</span>
                     </div>
                     <div v-else class="flex flex-row gap-x-1 items-center" title="Not Tradeable">
-                      <Icon name="uil:times" size="2em" />
+                      <Icon name="uil:times" size="1.5em" />
                       <span class="hidden sm:block">Not Tradeable</span>
                     </div>
                     <MumeButton v-if="isNftOwned" type="button" class="ml-auto" title="Toggle Tradeable"
@@ -311,7 +345,7 @@ const totalEthEditPrice = computed(() => {
 })
 
 async function quickSearchItems(keyword: string) {
-  if (!keyword) {
+  if (!keyword || searchLoading.value) {
     return;
   }
 
@@ -348,6 +382,10 @@ function selectImageIndex(index: number) {
 
 function formatDate(date: string) {
   return dayjs(date).format("DD/MM/YYYY HH:mm:ss")
+}
+
+function formatBlockscanLink(nftId: string) {
+  return `https://exp-l1.jibchain.net/token/${chainAbi.value.address}/instance/${nftId}`;
 }
 
 async function loadItemData() {
