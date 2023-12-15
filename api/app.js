@@ -1,4 +1,4 @@
-import { init as initRuntime } from "./configs/runtime.js";
+import { init as initRuntime, isProductionMode } from "./configs/runtime.js";
 import { startMongoDbService } from "./services/mongoose.js";
 import { startApiService } from "./api/api.js";
 import { startRedisService } from "./services/redis.js";
@@ -15,8 +15,10 @@ async function init() {
 
   startApiService(parseInt(process.env.API_PORT, 10));
 
-  const job = getCleanJobs();
-  job.start();
+  if (!isProductionMode()) {
+    const job = getCleanJobs();
+    job.start();
+  }
 }
 
 init();

@@ -5,6 +5,7 @@ import { CronJob } from "cron";
 import { getUsedCertPaths, getUsedImagePaths } from "./artitem.js";
 import { error, log } from "../utils/logging.js";
 import { getRedisClient } from "../services/redis.js";
+import { isProductionMode } from "../configs/runtime.js";
 
 const redisImgPathKey = "mumeatoy-imgs";
 const redisCertPathKey = "mumeatoy-certs";
@@ -93,13 +94,15 @@ async function cleanCerts() {
   });
 }
 
+export function cleanAll() {
+  cleanImages();
+  cleanCerts();
+}
+
 export function getCleanJobs() {
   return new CronJob(
-    "* * * * *",
-    () => {
-      cleanImages();
-      cleanCerts();
-    },
+    isProductionMode() ? "0 0 * * *" : "* * * * *",
+    cleanAll,
     null,
     false,
     "Asia/Bangkok"
