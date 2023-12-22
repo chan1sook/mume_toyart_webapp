@@ -74,6 +74,7 @@ interface EthTxReciptLogResonse {
 interface NftInfomation {
   owner: string;
   tradable: boolean;
+  sellable: boolean;
   price: bigint;
   uri: string;
 }

@@ -1,21 +1,32 @@
 import escapeStringRegexp from "escape-string-regexp";
 
-import { isUseDevchain, getProdChainVersion } from "../configs/runtime.js";
+import { isUseDevchain, getDevChainVersion } from "../configs/runtime.js";
 import ArtItemModel from "../models/artitem.js";
 import mongoose, { isObjectIdOrHexString } from "mongoose";
+
+function getDevchainOrQuery() {
+  return [
+    {
+      devChain: false,
+    },
+    {
+      devChain: true,
+      chainVersion: getDevChainVersion(),
+    },
+  ];
+}
 
 export function getArtItemByItemId(id) {
   if (isUseDevchain()) {
     return ArtItemModel.findOne({
       itemId: id,
-      devChain: true,
+      $or: getDevchainOrQuery(),
     });
   }
 
   return ArtItemModel.findOne({
     itemId: id,
     devChain: false,
-    chainVersion: getProdChainVersion(),
   });
 }
 
@@ -24,7 +35,15 @@ export async function getArtItemCategoriesMetadata() {
   let uncategorizedN = 0;
   let totalItems = 0;
 
-  const artItemCursor = ArtItemModel.find().cursor();
+  const query = {};
+
+  if (!isUseDevchain()) {
+    query.devChain = false;
+  } else {
+    query.$or = getDevchainOrQuery();
+  }
+
+  const artItemCursor = ArtItemModel.find(query).cursor();
   let nextItem = await artItemCursor.next();
   while (nextItem) {
     totalItems += 1;
@@ -49,13 +68,12 @@ export async function getArtItemCategoriesMetadata() {
 }
 
 export function searchAllArtItems(nextFrom) {
-  const query = {
-    devChain: true,
-  };
+  const query = {};
 
   if (!isUseDevchain()) {
     query.devChain = false;
-    query.chainVersion = getProdChainVersion();
+  } else {
+    query.$or = getDevchainOrQuery();
   }
 
   if (isObjectIdOrHexString(nextFrom)) {
@@ -63,19 +81,30 @@ export function searchAllArtItems(nextFrom) {
       $gt: new mongoose.Types.ObjectId(nextFrom.toString()),
     };
   }
+  console.log(query);
 
   return ArtItemModel.find(query);
 }
 
 export function searchUncategorizedArtItems(nextFrom) {
-  const query = {
-    devChain: true,
-    $or: [{ categories: { $exists: false } }, { categories: { $eq: [] } }],
-  };
+  const baseOrQuery = [
+    { categories: { $exists: false } },
+    { categories: { $eq: [] } },
+  ];
+  const query = {};
 
   if (!isUseDevchain()) {
     query.devChain = false;
-    query.chainVersion = getProdChainVersion();
+    query.$or = baseOrQuery;
+  } else {
+    query.$and = [
+      {
+        $or: baseOrQuery,
+      },
+      {
+        $or: getDevchainOrQuery(),
+      },
+    ];
   }
 
   if (isObjectIdOrHexString(nextFrom)) {
@@ -89,13 +118,13 @@ export function searchUncategorizedArtItems(nextFrom) {
 
 export function searchCategorizedArtItems(categoryName = "", nextFrom) {
   const query = {
-    devChain: true,
     categories: categoryName,
   };
 
   if (!isUseDevchain()) {
     query.devChain = false;
-    query.chainVersion = getProdChainVersion();
+  } else {
+    query.$or = getDevchainOrQuery();
   }
 
   if (isObjectIdOrHexString(nextFrom)) {
@@ -109,15 +138,21 @@ export function searchCategorizedArtItems(categoryName = "", nextFrom) {
 
 export function searchOtherArtItems(keyword = "", nextFrom) {
   const kwRegex = new RegExp(escapeStringRegexp(keyword));
-
-  const query = {
-    devChain: true,
-    $or: [{ name: kwRegex }, { mac: kwRegex }, { owner: kwRegex }],
-  };
+  const baseOrQuery = [{ name: kwRegex }, { mac: kwRegex }, { owner: kwRegex }];
+  const query = {};
 
   if (!isUseDevchain()) {
     query.devChain = false;
-    query.chainVersion = getProdChainVersion();
+    query.$or = baseOrQuery;
+  } else {
+    query.$and = [
+      {
+        $or: baseOrQuery,
+      },
+      {
+        $or: getDevchainOrQuery(),
+      },
+    ];
   }
 
   if (isObjectIdOrHexString(nextFrom)) {

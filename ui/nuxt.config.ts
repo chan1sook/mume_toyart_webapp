@@ -12,7 +12,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       USE_DEVCHAIN: true,
-      CHAIN_VERSION: 3,
+      CHAIN_VERSION: 4,
     },
   },
   build: {
@@ -20,7 +20,7 @@ export default defineNuxtConfig({
   },
   nitro: {
     routeRules: {
-      "/mapi/**": { proxy: "http://localhost:3064/**", prerender: true },
+      "/mapi/**": { proxy: "http://localhost:3064/**", prerender: false },
     },
   },
 });

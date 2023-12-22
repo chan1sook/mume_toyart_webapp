@@ -1,8 +1,10 @@
 import devContractAbi1 from "~/assets/jbc-chain/MumeArtToyNftB2.json";
 import devContractAbi2 from "~/assets/jbc-chain/MumeArtToyNftB4.json";
 import devContractAbi3 from "~/assets/jbc-chain/MumeArtToyNftB5.json";
+import devContractAbi4 from "~/assets/jbc-chain/MumeArtToyNftB6.json";
 
-import productionAbi from "~/assets/jbc-chain/MumeArtToyNft1.json";
+import productionAbi1 from "~/assets/jbc-chain/MumeArtToyNft1.json";
+import productionAbi2 from "~/assets/jbc-chain/MumeArtToyNft2.json";
 
 export const jbcchain = {
   chainId: 8899,
@@ -28,15 +30,41 @@ export function getChainAbi(devChain: boolean, version: number) {
       case 2:
         console.log("Use Dev Chain: V2 (B4)");
         return devContractAbi2;
-      default:
+      case 3:
         console.log("Use Dev Chain: V3 (B5)");
         return devContractAbi3;
+      default:
+        console.log("Use Dev Chain: V4 (B6)");
+        return devContractAbi4;
     }
   }
 
   switch (version) {
-    default:
+    case 1:
       console.log("Use Production Chain: V1");
-      return productionAbi;
+      return productionAbi1;
+    default:
+      console.log("Use Production Chain: V2");
+      return productionAbi2;
+  }
+}
+
+export function getCodeSignatureByChain(devChain: boolean, version: number) {
+  if (devChain) {
+    switch (version) {
+      case 1:
+      case 2:
+      case 3:
+        return 1;
+      default:
+        return 2;
+    }
+  }
+
+  switch (version) {
+    case 1:
+      return 1;
+    default:
+      return 2;
   }
 }

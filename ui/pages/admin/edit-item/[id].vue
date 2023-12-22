@@ -81,7 +81,7 @@
                   <ClientOnly>
                     <w3m-button class="inline-block" />
                   </ClientOnly>
-                  <span v-if="useDevChain" class="text-red-200 capitalize">Dev Chain: For Testing Only</span>
+                  <span v-if="useDevChain" class="text-red-300 capitalize">Dev Chain: For Testing Only</span>
                 </div>
                 <template v-if="!isSelectedChainCorrect">
                   <div class="italic">Not in JIB Chain!</div>

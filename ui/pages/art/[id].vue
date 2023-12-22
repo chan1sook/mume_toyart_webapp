@@ -129,7 +129,7 @@
                     <ClientOnly>
                       <w3m-button class="inline-block" />
                     </ClientOnly>
-                    <span v-if="useDevChain" class="text-red-200 capitalize">Dev Chain: For Testing Only</span>
+                    <span v-if="useDevChain" class="text-red-300 capitalize">Dev Chain: For Testing Only</span>
                   </div>
                   <template v-if="!isSelectedChainCorrect">
                     <div class="italic">Not in JIB Chain!</div>
@@ -217,26 +217,43 @@
                     </MumeButton>
                   </div>
                 </div>
-                <template v-if="nftData.tradable">
-                  <div v-if="!isNftOwned" class="col-span-2">
-                    <MumeButton type="button" title="Buy NFT" @click="buyNft">
-                      Buy NFT
-                    </MumeButton>
-                  </div>
-                  <template v-else>
-                    <div class="pt-2">Transfer To</div>
-                    <div>
-                      <div class="flex flex-row">
-                        <MumeInput v-model="nftOptions.targetAddress" type="text" class="flex-1"
-                          inputClasses="rounded-r-none" :invalid="!isTargetEthAddress" />
-                        <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1 rounded-l-none"
-                          title="Transfer NFT" @click="transferToken">
-                          <Icon name="bi:send" />
-                          <span class="hidden sm:block">Send</span>
-                        </MumeButton>
+                <template v-if="contractCodeSignature > 1">
+                  <div class="pt-2">Sellable</div>
+                  <div>
+                    <div class="flex flex-row gap-x-2">
+                      <div v-if="nftData.sellable" class="flex flex-row gap-x-1 items-center" title="Sellable">
+                        <Icon name="uil:check" size="1.5em" />
+                        <span class="hidden sm:block">Sellable</span>
                       </div>
+                      <div v-else class="flex flex-row gap-x-1 items-center" title="Not Sellable">
+                        <Icon name="uil:times" size="1.5em" />
+                        <span class="hidden sm:block">Not Sellable</span>
+                      </div>
+                      <MumeButton v-if="isNftOwned" type="button" class="ml-auto" title="Toggle Sellable"
+                        @click="toggleSellableFlag">
+                        Toggle
+                      </MumeButton>
                     </div>
-                  </template>
+                  </div>
+                </template>
+                <div v-if="!isNftOwned && nftData.sellable" class="col-span-2">
+                  <MumeButton type="button" title="Buy NFT" @click="buyNft">
+                    Buy NFT
+                  </MumeButton>
+                </div>
+                <template v-if="isNftOwned && isNftTradeable">
+                  <div class="pt-2">Transfer To</div>
+                  <div>
+                    <div class="flex flex-row">
+                      <MumeInput v-model="nftOptions.targetAddress" type="text" class="flex-1"
+                        inputClasses="rounded-r-none" :invalid="!isTargetEthAddress" />
+                      <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1 rounded-l-none"
+                        title="Transfer NFT" @click="transferToken">
+                        <Icon name="bi:send" />
+                        <span class="hidden sm:block">Send</span>
+                      </MumeButton>
+                    </div>
+                  </div>
                 </template>
               </template>
             </template>
@@ -270,7 +287,7 @@ import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/vue'
 import { BrowserProvider, Contract, formatUnits, parseUnits } from 'ethers'
 import { useToast } from "vue-toastification";
 
-import { jbcchain, walletConnectId, metadata, getChainAbi } from "~/utils/eth"
+import { jbcchain, walletConnectId, metadata, getChainAbi, getCodeSignatureByChain } from "~/utils/eth"
 import { getImagePath, getCertPath } from "~/utils/path";
 import { historyActionPretty } from "~/utils/history";
 
@@ -300,6 +317,25 @@ const nftOptions = ref({
   priceUnit: "ether",
   targetAddress: "",
 });
+
+const isNftTradeable = computed(() => {
+  if (!nftData.value) {
+    return false;
+  }
+  return nftData.value.tradable;
+});
+
+const isNftSellable = computed(() => {
+  if (!nftData.value) {
+    return false;
+  }
+  switch (contractCodeSignature.value) {
+    case 1:
+      return nftData.value.tradable;
+    default:
+      return nftData.value.sellable;
+  }
+})
 const historyLoading = ref(false);
 const historyShow = ref(false);
 const selectedImgIndex: Ref<number | undefined> = ref(undefined);
@@ -318,6 +354,9 @@ const useDevChain = computed(() => !!itemData.value ? itemData.value.devChain : 
 const chainVersion = computed(() => !!itemData.value ? itemData.value.chainVersion : useRuntimeConfig().public.CHAIN_VERSION);
 const chainAbi = computed(() => {
   return getChainAbi(useDevChain.value, chainVersion.value);
+});
+const contractCodeSignature = computed(() => {
+  return getCodeSignatureByChain(useDevChain.value, chainVersion.value);
 });
 const isWalletConnected = ref(false);
 const isSelectedChainCorrect = ref(false);
@@ -517,13 +556,28 @@ async function loadNftData() {
 
     const abi = chainAbi.value;
     const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
-    const response = await MumeArtToyContract.nftInfomationOf(itemData?.value?.nftId) as [string, boolean, bigint, string];
 
-    nftData.value = {
-      owner: response[0],
-      tradable: response[1],
-      price: response[2],
-      uri: response[3],
+    switch (contractCodeSignature.value) {
+      case 1:
+        const response1 = await MumeArtToyContract.nftInfomationOf(itemData?.value?.nftId) as [string, boolean, bigint, string];
+        nftData.value = {
+          owner: response1[0],
+          tradable: response1[1],
+          sellable: true, // due chain bug
+          price: response1[2],
+          uri: response1[3],
+        }
+        break;
+      default:
+        const response2 = await MumeArtToyContract.nftInfomationOf(itemData?.value?.nftId) as [string, boolean, boolean, bigint, string];
+        nftData.value = {
+          owner: response2[0],
+          tradable: response2[1],
+          sellable: response2[2],
+          price: response2[3],
+          uri: response2[4],
+        }
+        break;
     }
   } catch (err) {
     let message = "Can't Get NFT Data";
@@ -661,6 +715,50 @@ async function toggleTradeableFlag() {
     loadNftData();
   } catch (err) {
     let message = "Can't Set Tradable Flag";
+    if (err instanceof Error) {
+      message = err.message
+    }
+
+    nftLoading.value = false;
+    useToast().error(message, {
+      timeout: 5000
+    });
+  }
+
+}
+
+async function toggleSellableFlag() {
+  if (!isNftValid.value || !nftData.value || typeof itemData.value?.nftId !== 'string' || contractCodeSignature.value < 2) {
+    return;
+  }
+
+  const nextTradableFlag = !nftData.value.sellable;
+  loadingText.value = "Send Transaction";
+  nftLoading.value = true;
+
+  try {
+    const walletProvider = web3Modal.getWalletProvider()
+
+    if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+    if (!walletProvider) throw Error("WalletProvider not found")
+
+    const ethersProvider = new BrowserProvider(walletProvider);
+    const signer = await ethersProvider.getSigner();
+
+    const abi = chainAbi.value;
+    const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
+    const tx = await MumeArtToyContract.setTradeable(
+      itemData.value.nftId, nextTradableFlag
+    );
+    await tx.wait();
+
+    nftLoading.value = false;
+    useToast().success("NFT Updated", {
+      timeout: 5000
+    });
+    loadNftData();
+  } catch (err) {
+    let message = "Can't Set Sellable Flag";
     if (err instanceof Error) {
       message = err.message
     }
