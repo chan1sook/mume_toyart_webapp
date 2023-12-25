@@ -15,7 +15,12 @@
         <span title="NFT #:">
           <Icon name="ri:nft-fill" />:
         </span>
-        {{ props.item.nftId }}
+        <span>
+          {{ getPrettyChainName(props.item.devChain, props.item.chainVersion) }}
+        </span>
+        <span>
+          #{{ props.item.nftId }}
+        </span>
       </div>
       <div v-else class="text-sm">
         <span title="Owner">
@@ -28,11 +33,13 @@
 </template>
 
 <script lang="ts" setup>
+import { getPrettyChainName } from "~/utils/eth"
 import { getImagePath, getFakeImagePath } from "~/utils/path";
 
 const props = defineProps<{
   item: ArtSearchResponse,
 }>();
+
 
 
 const emit = defineEmits<{

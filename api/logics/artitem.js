@@ -1,6 +1,10 @@
 import escapeStringRegexp from "escape-string-regexp";
 
-import { isUseDevchain, getDevChainVersion } from "../configs/runtime.js";
+import {
+  isUseDevchain,
+  getDevChainVersion,
+  getProdChainVersion,
+} from "../configs/runtime.js";
 import ArtItemModel from "../models/artitem.js";
 import mongoose, { isObjectIdOrHexString } from "mongoose";
 
@@ -24,6 +28,7 @@ export function getArtItemByItemId(id) {
     });
   }
 
+  // Still show hidden
   return ArtItemModel.findOne({
     itemId: id,
     devChain: false,
@@ -38,7 +43,10 @@ export async function getArtItemCategoriesMetadata() {
   const query = {};
 
   if (!isUseDevchain()) {
+    // Restricted current + nft only
     query.devChain = false;
+    query.nftId = { $exists: true };
+    query.chainVersion = getProdChainVersion();
   } else {
     query.$or = getDevchainOrQuery();
   }
@@ -72,6 +80,8 @@ export function searchAllArtItems(nextFrom) {
 
   if (!isUseDevchain()) {
     query.devChain = false;
+    query.nftId = { $exists: true };
+    query.chainVersion = getProdChainVersion();
   } else {
     query.$or = getDevchainOrQuery();
   }
@@ -81,7 +91,6 @@ export function searchAllArtItems(nextFrom) {
       $gt: new mongoose.Types.ObjectId(nextFrom.toString()),
     };
   }
-  console.log(query);
 
   return ArtItemModel.find(query);
 }
@@ -96,6 +105,8 @@ export function searchUncategorizedArtItems(nextFrom) {
   if (!isUseDevchain()) {
     query.devChain = false;
     query.$or = baseOrQuery;
+    query.nftId = { $exists: true };
+    query.chainVersion = getProdChainVersion();
   } else {
     query.$and = [
       {
@@ -123,6 +134,8 @@ export function searchCategorizedArtItems(categoryName = "", nextFrom) {
 
   if (!isUseDevchain()) {
     query.devChain = false;
+    query.nftId = { $exists: true };
+    query.chainVersion = getProdChainVersion();
   } else {
     query.$or = getDevchainOrQuery();
   }
@@ -144,6 +157,8 @@ export function searchOtherArtItems(keyword = "", nextFrom) {
   if (!isUseDevchain()) {
     query.devChain = false;
     query.$or = baseOrQuery;
+    query.nftId = { $exists: true };
+    query.chainVersion = getProdChainVersion();
   } else {
     query.$and = [
       {

@@ -68,3 +68,26 @@ export function getCodeSignatureByChain(devChain: boolean, version: number) {
       return 2;
   }
 }
+export function getPrettyChainName(devChain: boolean, version: number) {
+  if (devChain) {
+    switch (version) {
+      case 1:
+        return "MATN-B2";
+      case 2:
+        return "MATN-B4";
+      case 3:
+        return "MATN-B5";
+      default:
+        return "MATN-B6";
+    }
+  }
+
+  switch (version) {
+    case 1:
+      return "MATN1";
+    default:
+      return "MATN2";
+  }
+
+  return `MATN${version}`;
+}

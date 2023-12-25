@@ -15,9 +15,6 @@
       <NuxtLink href="/products">
         Browse All Products
       </NuxtLink>
-      <NuxtLink href="/apologize-v1" class="mt-4 text-red-300">
-        Notice: การหยุดการออก Token MATN1
-      </NuxtLink>
     </div>
     <MumeFixedBar></MumeFixedBar>
     <ClientOnly>
