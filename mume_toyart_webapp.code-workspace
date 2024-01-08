@@ -8,6 +8,9 @@
     },
     {
       "path": "smart_contract"
+    },
+    {
+      "path": "new_smart_contract"
     }
   ],
   "settings": {
