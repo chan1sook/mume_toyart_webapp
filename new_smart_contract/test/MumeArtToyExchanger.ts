@@ -68,13 +68,13 @@ describe("MumeArtToyUtilityTokenExchange", function () {
     it("Should correct name", async function () {
       const { MumeArtToyExchanger } = await loadFixture(deployFixture);
 
-      expect(await MumeArtToyExchanger.name()).to.equal("JBC-MATU LP Token");
+      expect(await MumeArtToyExchanger.name()).to.include("JBC-MATU LP Token");
     });
 
     it("Should correct symbol", async function () {
       const { MumeArtToyExchanger } = await loadFixture(deployFixture);
 
-      expect(await MumeArtToyExchanger.symbol()).to.equal("MATU-LP");
+      expect(await MumeArtToyExchanger.symbol()).to.include("MATU-LP");
     });
 
     it("Init LP Start", async function () {

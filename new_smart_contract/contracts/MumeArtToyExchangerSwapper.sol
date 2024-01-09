@@ -17,10 +17,10 @@ contract MumeArtToyUtilityTokenExchangeSwapper is AccessControl {
     event SwapJbcToMatu(address indexed caller, uint256 jbcAmount, uint256 cmjAmount, uint256 platformfee);
     event SwapMatuToJbc(address indexed caller, uint256 cmjAmount, uint256 jbcAmount, uint256 platformfee);
 
-    constructor(address _exchangeAddress, address _contractAddress, address initialAdmin)
+    constructor(address exchangeAddress, address contractAddress, address initialAdmin)
     {
-        matuContractAddress = _contractAddress;
-        matuExchangeAddress = _exchangeAddress;
+        matuContractAddress = contractAddress;
+        matuExchangeAddress = exchangeAddress;
         contractDeployer = msg.sender;
         // Owner Deployer Always Grant ADMIN_ROLE
         _grantRole(ADMIN_ROLE, initialAdmin);

@@ -10,8 +10,8 @@ contract MumeArtToyUtilityToken is ERC20, ERC20Permit, AccessControl {
     address public contractDeployer;
 
     constructor(address initialAdmin)
-        ERC20("MumeArtToyUtilityToken", "MATU")
-        ERC20Permit("MumeArtToyUtilityToken")
+        ERC20("MumeArtToyUtilityToken-B2", "MATU-B2")
+        ERC20Permit("MumeArtToyUtilityToken-B2")
     {
         contractDeployer = msg.sender;
         // Owner Deployer Always Grant ADMIN_ROLE

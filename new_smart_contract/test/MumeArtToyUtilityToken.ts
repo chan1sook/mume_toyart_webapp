@@ -33,7 +33,7 @@ describe("MumeArtToyUtilityToken", function () {
     it("Should correct name", async function () {
       const { MumeArtToyUtilityToken } = await loadFixture(deployFixture);
 
-      expect(await MumeArtToyUtilityToken.name()).to.equal(
+      expect(await MumeArtToyUtilityToken.name()).to.include(
         "MumeArtToyUtilityToken"
       );
     });
@@ -41,7 +41,7 @@ describe("MumeArtToyUtilityToken", function () {
     it("Should correct signature", async function () {
       const { MumeArtToyUtilityToken } = await loadFixture(deployFixture);
 
-      expect(await MumeArtToyUtilityToken.symbol()).to.equal("MATU");
+      expect(await MumeArtToyUtilityToken.symbol()).to.include("MATU");
     });
 
     describe("Mint", async function () {

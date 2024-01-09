@@ -7,16 +7,18 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract MumeArtToyUtilityToken is ERC20, ERC20Permit, AccessControl {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    address public contractDeployer;
 
-    constructor()
+    constructor(address initialAdmin)
         ERC20("MumeArtToyUtilityToken", "MATU")
         ERC20Permit("MumeArtToyUtilityToken")
     {
+        contractDeployer = msg.sender;
         // Owner Deployer Always Grant ADMIN_ROLE
-        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, initialAdmin);
     }
 
-    function mint(address to, uint256 amount) public onlyOwner {
+    function mint(address to, uint256 amount) public onlyRole(ADMIN_ROLE) {
         _mint(to, amount);
     }
 
