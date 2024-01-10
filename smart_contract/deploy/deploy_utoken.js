@@ -4,11 +4,11 @@ module.exports = async function (hre) {
 
   const { developer } = await getNamedAccounts();
 
-  await deploy("MumeArtToyUtilityToken", {
+  await deploy("MumeArtToyMuToken", {
     from: developer,
     args: [developer],
     log: true,
   });
 };
 
-module.exports.tags = ["MumeArtToyUtilityToken"];
+module.exports.tags = ["MumeArtToyMuToken"];

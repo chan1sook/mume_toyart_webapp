@@ -6,6 +6,8 @@ import devContractAbi4 from "~/assets/jbc-chain/MumeArtToyNftB6.json";
 import productionAbi1 from "~/assets/jbc-chain/MumeArtToyNft1.json";
 import productionAbi2 from "~/assets/jbc-chain/MumeArtToyNft2.json";
 
+import muAbi from "~/assets/jbc-chain/MumeArtToyMuToken.json";
+
 export const jbcchain = {
   chainId: 8899,
   name: "JIBCHAIN",
@@ -90,4 +92,8 @@ export function getPrettyChainName(devChain: boolean, version: number) {
   }
 
   return `MATN${version}`;
+}
+
+export function getMuAbi() {
+  return muAbi;
 }

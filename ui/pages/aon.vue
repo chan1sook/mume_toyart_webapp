@@ -1,5 +1,5 @@
 <template>
-  <MumeContainer class="flex flex-col justify-center items-center gap-y-2 min-w-[400px]">
+  <MumeContainer class="flex flex-col justify-center items-center gap-y-2 ">
     <h3 class="transition-all duration-200 my-4 text-2xl transform scale-y-110 sm:text-3xl  font-bold">
       Login
     </h3>

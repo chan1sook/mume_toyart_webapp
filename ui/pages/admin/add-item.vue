@@ -1,5 +1,5 @@
 <template>
-  <MumeContainer class="flex flex-col min-w-[400px]">
+  <MumeContainer class="flex flex-col ">
     <div class="flex-1 flex flex-col overflow-y-auto">
       <form class="w-full p-4 flex flex-col justify-center items-center gap-y-2" @submit.prevent="addItem">
         <h3 class="transition-all duration-200 my-4 text-2xl transform scale-y-110 sm:text-3xl font-bold">

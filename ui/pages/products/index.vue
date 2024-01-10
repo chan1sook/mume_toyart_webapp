@@ -1,5 +1,5 @@
 <template>
-  <MumeContainer class="flex flex-col min-w-[400px]">
+  <MumeContainer class="flex flex-col ">
     <MumeSearchTopBar v-model="searchKeyword" @search="quickSearchItems" />
     <div class="flex-1 flex flex-col overflow-y-auto">
       <div class="w-full p-4 flex flex-col justify-center items-center gap-y-1">
