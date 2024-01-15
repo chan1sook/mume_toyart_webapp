@@ -20,7 +20,7 @@
     </form>
     <div class="ml-auto flex flex-row gap-x-2 gap-y-1 items-center">
       <template v-if="muTokenShow">
-        <div class="whitespace-nowrap">{{ muTokenFormated }} MU</div>
+        <div class="whitespace-nowrap">{{ muTokenPretty }} MU</div>
         <NuxtLink href="/exchange-mu/" class="inline-block" title="Exchange">
           <Icon name="material-symbols:swap-horiz-rounded" size="1.5em"></Icon>
         </NuxtLink>
@@ -49,8 +49,13 @@ const emit = defineEmits<{
 const muTokenShow = ref(false);
 const muToken = ref(toBigInt("0"));
 const isDevUser = computed(() => isDeveloperUser(useSessionData().value));
+const useDevChain = computed(() => useRuntimeConfig().public.USE_DEVCHAIN);
+const chainVersion = computed(() => useRuntimeConfig().public.CHAIN_VERSION);
+const muAbi = computed(() => {
+  return getMuAbi(useDevChain.value, chainVersion.value);
+});
 
-const muTokenFormated = computed(() => {
+const muTokenPretty = computed(() => {
   return formatUnits(muToken.value, "ether");
 })
 
@@ -86,7 +91,7 @@ async function updateMuBalance() {
     const ethersProvider = new BrowserProvider(walletProvider);
     const signer = await ethersProvider.getSigner();
 
-    const abi = getMuAbi();
+    const abi = muAbi.value;
     const MumeArtToyExchangeContract = new Contract(abi.address, abi.abi, signer);
 
     const token = await MumeArtToyExchangeContract.balanceOf(signer.address) as bigint;

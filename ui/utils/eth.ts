@@ -1,12 +1,17 @@
-import devContractAbi1 from "~/assets/jbc-chain/MumeArtToyNftB2.json";
-import devContractAbi2 from "~/assets/jbc-chain/MumeArtToyNftB4.json";
-import devContractAbi3 from "~/assets/jbc-chain/MumeArtToyNftB5.json";
-import devContractAbi4 from "~/assets/jbc-chain/MumeArtToyNftB6.json";
+import devNftAbi1 from "~/assets/jbc-chain/MumeArtToyNftB2.json";
+import devNftAbi2 from "~/assets/jbc-chain/MumeArtToyNftB4.json";
+import devNftAbi3 from "~/assets/jbc-chain/MumeArtToyNftB5.json";
+import devNftAbi4 from "~/assets/jbc-chain/MumeArtToyNftB6.json";
 
-import productionAbi1 from "~/assets/jbc-chain/MumeArtToyNft1.json";
-import productionAbi2 from "~/assets/jbc-chain/MumeArtToyNft2.json";
+import productionNftAbi1 from "~/assets/jbc-chain/MumeArtToyNft1.json";
+import productionNftAbi2 from "~/assets/jbc-chain/MumeArtToyNft2.json";
 
-import muAbi from "~/assets/jbc-chain/MumeArtToyMuToken.json";
+import devMuAbi1 from "~/assets/jbc-chain/MumeArtToyMuTokenB1.json";
+import productionMuAbi1 from "~/assets/jbc-chain/MumeArtToyMuToken.json";
+
+import devClaimMuAbi1 from "~/assets/jbc-chain/ClaimMuFromMumeNftB6Contract.json";
+import productionClaimMuAbi1 from "~/assets/jbc-chain/ClaimMuFromMumeNft1Contract.json";
+import productionClaimMuAbi2 from "~/assets/jbc-chain/ClaimMuFromMumeNft2Contract.json";
 
 export const jbcchain = {
   chainId: 8899,
@@ -23,31 +28,31 @@ export const metadata = {
 };
 export const walletConnectId = "80b9309ad284207bd2fcebe5f4fb8a62";
 
-export function getChainAbi(devChain: boolean, version: number) {
+export function getMumeNftAbi(devChain: boolean, version: number) {
   if (devChain) {
     switch (version) {
       case 1:
         console.log("Use Dev Chain: V1 (B2)");
-        return devContractAbi1;
+        return devNftAbi1;
       case 2:
         console.log("Use Dev Chain: V2 (B4)");
-        return devContractAbi2;
+        return devNftAbi2;
       case 3:
         console.log("Use Dev Chain: V3 (B5)");
-        return devContractAbi3;
+        return devNftAbi3;
       default:
         console.log("Use Dev Chain: V4 (B6)");
-        return devContractAbi4;
+        return devNftAbi4;
     }
   }
 
   switch (version) {
     case 1:
       console.log("Use Production Chain: V1");
-      return productionAbi1;
+      return productionNftAbi1;
     default:
       console.log("Use Production Chain: V2");
-      return productionAbi2;
+      return productionNftAbi2;
   }
 }
 
@@ -70,6 +75,7 @@ export function getCodeSignatureByChain(devChain: boolean, version: number) {
       return 2;
   }
 }
+
 export function getPrettyChainName(devChain: boolean, version: number) {
   if (devChain) {
     switch (version) {
@@ -94,6 +100,42 @@ export function getPrettyChainName(devChain: boolean, version: number) {
   return `MATN${version}`;
 }
 
-export function getMuAbi() {
-  return muAbi;
+export function getMuAbi(devChain: boolean, version: number) {
+  if (devChain) {
+    switch (version) {
+      default:
+        console.log("Use Dev Chain: V4 (to B6)");
+        return devMuAbi1;
+    }
+  }
+
+  switch (version) {
+    default:
+      console.log("Use Production Chain: V1");
+      return productionMuAbi1;
+  }
+}
+
+export function getClaimMuAbi(devChain: boolean, version: number) {
+  if (devChain) {
+    switch (version) {
+      case 1:
+      case 2:
+      case 3:
+        console.log("N/A");
+        return null;
+      default:
+        console.log("Use Dev Chain: V4 (to B6)");
+        return devClaimMuAbi1;
+    }
+  }
+
+  switch (version) {
+    case 1:
+      console.log("Use Production Chain: V1 (Link 1)");
+      return productionClaimMuAbi1;
+    default:
+      console.log("Use Production Chain: V2 (Link 2)");
+      return productionClaimMuAbi2;
+  }
 }

@@ -15,9 +15,12 @@ module.exports = {
   namedAccounts: {
     developer: "0xC70Edf3aB36E0D57eFD8f412A3460D225931A110",
     aon: "0x5572eAA48D9CF8Ae04C7813B5638349d641a7B91",
+    mumeNft1Contract: "0x7650339946CfEaE8E8EFe34f85cAbE032612d7b4",
+    mumeNft2Contract: "0x85BB3FeAAfFfd526856Eac03E8E8f5d52B752Ca2",
     muTokenContract: "0xF8d18F1d810af610bd9126230C65dd54B3Cda500",
-    // matuTokenContractAccount: "0xB5cF482F8528a445CBF553fd98179e4D766D07a3",
-    // matuExchangeContractAccount: "0x06f48166fF6f459BDd570fC64f940cEe6Ba67de0",
+
+    mumeNftTestContract: "0xf5B8EeAd06e494384eD70B9ea6A191c874841fb8",
+    muTokenTestContract: "0x412534E7bBB3FC55833c6d32adc6b4450883F2bc",
   },
   networks: {
     JBC: {

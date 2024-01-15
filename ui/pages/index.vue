@@ -17,7 +17,7 @@
         </form>
         <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center justify-center my-2">
           <MumeIndexMenu href="/products" icon="uil:folder-open" title="Browse Products">
-            Browse
+            Products
           </MumeIndexMenu>
           <MumeIndexMenu href="/exchange-mu" icon="material-symbols:swap-horiz-rounded" title="Exchange MU-Coin">
             Exchange MU

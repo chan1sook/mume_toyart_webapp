@@ -13,7 +13,11 @@
       <template v-if="tokenEnabled">
         <div>You Spend</div>
         <div class="flex flex-row items-center">
-          <div class="mr-2">JBC: </div>
+          <div class="mr-2">
+            <MumeCoinContainer name="JBC">
+              <img src="~/assets/jbc-badge.png" class="w-full h-full" />
+            </MumeCoinContainer>
+          </div>
           <MumeInput v-model="tokenOptions.price" type="number" min="0" step="1" class="flex-1" placeholder="Spend Token"
             inputClasses="rounded-r-none" :invalid="!isPriceValid" />
           <MumeSelect v-model="tokenOptions.priceUnit" class="inline-flex" selectClasses="rounded-l-none">
@@ -24,7 +28,11 @@
         </div>
         <div>You'll Get</div>
         <div class="flex flex-row items-center">
-          <div class="mr-2">MU: </div>
+          <div class="mr-2">
+            <MumeCoinContainer name="MU">
+              <img src="~/assets/mu-coin.png" class="w-full h-full" />
+            </MumeCoinContainer>
+          </div>
           <MumeInput :model-value="formatUnits(estimatedMu, tokenOptions.resultPriceUnit)" class="flex-1"
             placeholder="Token Get" inputClasses="rounded-r-none" readonly />
 
@@ -37,7 +45,7 @@
         <div class="border border-gray-400 rounded-md px-2 py-2 flex flex-col gap-x-2 pay-y-2">
           <div class="w-full custom-grid gap-x-2 pay-y-1">
             <div class="font-bold">Conversation Rate</div>
-            <div>{{ converstionRateStr }} MU per 1.0 JCB</div>
+            <div>{{ converstionRateStr }} MU per 1.0 JBC</div>
             <div class="font-bold">Fee Rate</div>
             <div>{{ feeRateStr }}%</div>
 
@@ -87,6 +95,11 @@ const searchKeyword = ref("");
 const searchLoading = ref(false);
 const tokenEnabled = ref(false);
 
+const useDevChain = computed(() => useRuntimeConfig().public.USE_DEVCHAIN);
+const chainVersion = computed(() => useRuntimeConfig().public.CHAIN_VERSION);
+const muAbi = computed(() => {
+  return getMuAbi(useDevChain.value, chainVersion.value);
+});
 const converstionRate = ref(toBigInt("0"));
 const feeRate = ref(toBigInt("0"));
 
@@ -175,7 +188,7 @@ async function getRates() {
     const ethersProvider = new BrowserProvider(walletProvider);
     const signer = await ethersProvider.getSigner();
 
-    const abi = getMuAbi();
+    const abi = muAbi.value;
     const MumeArtToyMuContract = new Contract(abi.address, abi.abi, signer);
 
     const _converstionRate = await MumeArtToyMuContract.conversationRate() as bigint;
@@ -210,7 +223,7 @@ async function exchangeMintMu() {
     const ethersProvider = new BrowserProvider(walletProvider);
     const signer = await ethersProvider.getSigner();
 
-    const abi = getMuAbi();
+    const abi = muAbi.value;
     const MumeArtToyMuContract = new Contract(abi.address, abi.abi, signer);
     const tx = await MumeArtToyMuContract.exchangeMint({ value: estimatedPaymentWei.value });
     await tx.wait();

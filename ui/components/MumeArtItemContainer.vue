@@ -40,8 +40,6 @@ const props = defineProps<{
   item: ArtSearchResponse,
 }>();
 
-
-
 const emit = defineEmits<{
   (e: "click", v: string): void;
 }>();

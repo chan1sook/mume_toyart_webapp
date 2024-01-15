@@ -163,7 +163,7 @@
                       </MumeSelect>
                     </div>
                     <div>
-                      <div class="italic">{{ totalEthPrice }} JBC</div>
+                      <div class="italic">{{ formatUnits(priceWei, "ether") }} JBC</div>
                     </div>
                     <div v-if="isNftOwned" class="flex flex-row justify-end">
                       <MumeButton type="button" class="flex flex-row gap-x-2 items-center" title="Adjust Price"
@@ -184,7 +184,7 @@
                       </MumeSelect>
                     </div>
                     <div>
-                      <div class="italic">{{ totalEthEditPrice }} JBC</div>
+                      <div class="italic">{{ formatUnits(newPriceWei, 'ether') }} JBC</div>
                     </div>
                     <div class="flex flex-row gap-x-2 items-center justify-end">
                       <MumeButton type="button" class="flex flex-row gap-x-2 items-center" title="Cancel Update"
@@ -200,7 +200,7 @@
                     </div>
                   </template>
                 </div>
-                <div class="pt-2">Tradable</div>
+                <div :class="[isNftOwned ? 'pt-2' : '']">Tradable</div>
                 <div>
                   <div class="flex flex-row gap-x-2">
                     <div v-if="nftData.tradable" class="flex flex-row gap-x-1 items-center" title="Tradeable">
@@ -218,7 +218,7 @@
                   </div>
                 </div>
                 <template v-if="contractCodeSignature > 1">
-                  <div class="pt-2">Sellable</div>
+                  <div :class="[isNftOwned ? 'pt-2' : '']">Sellable</div>
                   <div>
                     <div class="flex flex-row gap-x-2">
                       <div v-if="nftData.sellable" class="flex flex-row gap-x-1 items-center" title="Sellable">
@@ -255,6 +255,20 @@
                     </div>
                   </div>
                 </template>
+                <template v-if="isNftOwned">
+                  <div class="col-span-2 my-2 flex flex-row items-center justify-center">
+                    <MumeButton v-if="nftOptions.muClaimable" type="button"
+                      class="inline-flex flex-row items-center gap-x-1" title="Claim MU" @click="claimMu">
+                      <Icon name="mdi:cash-refund" />
+                      <span class="hidden sm:block">Claim MU</span>
+                    </MumeButton>
+                    <MumeButton v-else type="button" class="inline-flex flex-row items-center gap-x-1" title="MU Claimed"
+                      disabled>
+                      <Icon name="mdi:cash-refund" />
+                      <span class="hidden sm:block">MU Claimed</span>
+                    </MumeButton>
+                  </div>
+                </template>
               </template>
             </template>
             <template v-else>
@@ -284,10 +298,10 @@
 import dayjs from "dayjs";
 import { isAddress } from "web3-validator"
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/vue'
-import { BrowserProvider, Contract, formatUnits, parseUnits } from 'ethers'
+import { BrowserProvider, Contract, formatUnits, parseUnits, toBigInt } from 'ethers'
 import { useToast } from "vue-toastification";
 
-import { jbcchain, walletConnectId, metadata, getChainAbi, getCodeSignatureByChain } from "~/utils/eth"
+import { jbcchain, walletConnectId, metadata, getMumeNftAbi, getCodeSignatureByChain } from "~/utils/eth"
 import { getImagePath, getCertPath } from "~/utils/path";
 import { historyActionPretty } from "~/utils/history";
 
@@ -316,6 +330,8 @@ const nftOptions = ref({
   price: "",
   priceUnit: "ether",
   targetAddress: "",
+  muClaimable: false,
+
 });
 
 const isNftTradeable = computed(() => {
@@ -325,17 +341,6 @@ const isNftTradeable = computed(() => {
   return nftData.value.tradable;
 });
 
-const isNftSellable = computed(() => {
-  if (!nftData.value) {
-    return false;
-  }
-  switch (contractCodeSignature.value) {
-    case 1:
-      return nftData.value.tradable;
-    default:
-      return nftData.value.sellable;
-  }
-})
 const historyLoading = ref(false);
 const historyShow = ref(false);
 const selectedImgIndex: Ref<number | undefined> = ref(undefined);
@@ -352,8 +357,11 @@ const currentTab = ref(tabs.value[0].id);
 const isDevUser = computed(() => isDeveloperUser(sessionData.value));
 const useDevChain = computed(() => !!itemData.value ? itemData.value.devChain : useRuntimeConfig().public.USE_DEVCHAIN);
 const chainVersion = computed(() => !!itemData.value ? itemData.value.chainVersion : useRuntimeConfig().public.CHAIN_VERSION);
-const chainAbi = computed(() => {
-  return getChainAbi(useDevChain.value, chainVersion.value);
+const nftAbi = computed(() => {
+  return getMumeNftAbi(useDevChain.value, chainVersion.value);
+});
+const claimAbi = computed(() => {
+  return getClaimMuAbi(useDevChain.value, chainVersion.value);
 });
 const contractCodeSignature = computed(() => {
   return getCodeSignatureByChain(useDevChain.value, chainVersion.value);
@@ -369,18 +377,18 @@ watch(isWalletConnected, (value) => {
   }
 });
 
-
-const totalEthPrice = computed(() => {
+const priceWei = computed(() => {
   if (!nftData.value) {
-    return ""
+    return toBigInt("0");
   }
-  return formatUnits(nftData.value.price, "ether");
+
+  return nftData.value.price;
 })
-const totalEthEditPrice = computed(() => {
+const newPriceWei = computed(() => {
   const price = nftOptions.value.price;
   const priceUnit = nftOptions.value.priceUnit;
   const weiValues = parseUnits(price, priceUnit);
-  return formatUnits(weiValues, "ether");
+  return weiValues;
 })
 
 async function quickSearchItems(keyword: string) {
@@ -424,7 +432,7 @@ function formatDate(date: string) {
 }
 
 function formatBlockscanLink(nftId: string) {
-  return `https://exp-l1.jibchain.net/token/${chainAbi.value.address}/instance/${nftId}`;
+  return `https://exp-l1.jibchain.net/token/${nftAbi.value.address}/instance/${nftId}`;
 }
 
 async function loadItemData() {
@@ -554,7 +562,7 @@ async function loadNftData() {
     const ethersProvider = new BrowserProvider(walletProvider);
     const signer = await ethersProvider.getSigner();
 
-    const abi = chainAbi.value;
+    const abi = nftAbi.value;
     const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
 
     switch (contractCodeSignature.value) {
@@ -578,6 +586,14 @@ async function loadNftData() {
           uri: response2[4],
         }
         break;
+    }
+
+    const abi2 = claimAbi.value;
+    if (abi2) {
+      const MumeArtToyClaimContract = new Contract(abi2.address, abi2.abi, signer);
+      const canClaimMu = await MumeArtToyClaimContract.canClaimMu(itemData?.value?.nftId) as boolean;
+      // const muGain = await MumeArtToyClaimContract.muGain(itemData?.value?.nftId) as bigint;
+      nftOptions.value.muClaimable = canClaimMu;
     }
   } catch (err) {
     let message = "Can't Get NFT Data";
@@ -611,7 +627,7 @@ async function buyNft() {
     const ethersProvider = new BrowserProvider(walletProvider);
     const signer = await ethersProvider.getSigner();
 
-    const abi = chainAbi.value;
+    const abi = nftAbi.value;
     const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
     const tx = await MumeArtToyContract.buyNft(
       nftData.value.owner, itemData.value.nftId, {
@@ -656,7 +672,7 @@ async function transferToken() {
     const ethersProvider = new BrowserProvider(walletProvider);
     const signer = await ethersProvider.getSigner();
 
-    const abi = chainAbi.value;
+    const abi = nftAbi.value;
     const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
     const tx = await MumeArtToyContract.safeTransferFrom(
       nftData.value.owner, nftOptions.value.targetAddress, itemData.value.nftId
@@ -701,7 +717,7 @@ async function toggleTradeableFlag() {
     const ethersProvider = new BrowserProvider(walletProvider);
     const signer = await ethersProvider.getSigner();
 
-    const abi = chainAbi.value;
+    const abi = nftAbi.value;
     const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
     const tx = await MumeArtToyContract.setTradeable(
       itemData.value.nftId, nextTradableFlag
@@ -745,7 +761,7 @@ async function toggleSellableFlag() {
     const ethersProvider = new BrowserProvider(walletProvider);
     const signer = await ethersProvider.getSigner();
 
-    const abi = chainAbi.value;
+    const abi = nftAbi.value;
     const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
     const tx = await MumeArtToyContract.setTradeable(
       itemData.value.nftId, nextTradableFlag
@@ -788,7 +804,7 @@ async function updatePrice() {
     const ethersProvider = new BrowserProvider(walletProvider);
     const signer = await ethersProvider.getSigner();
 
-    const abi = chainAbi.value;
+    const abi = nftAbi.value;
     const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
     const tx = await MumeArtToyContract.setPrice(
       itemData.value.nftId, parseUnits(nftOptions.value.price, nftOptions.value.priceUnit),
@@ -813,6 +829,48 @@ async function updatePrice() {
     nftLoading.value = false;
   }
 }
+
+async function claimMu() {
+  const abi = claimAbi.value;
+
+  if (!nftOptions.value.muClaimable || !abi || typeof itemData.value?.nftId !== 'string') {
+    return;
+  }
+
+  loadingText.value = "Send Transaction";
+  nftLoading.value = true;
+
+  try {
+    const walletProvider = web3Modal.getWalletProvider()
+
+    if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+    if (!walletProvider) throw Error("WalletProvider not found")
+
+    const ethersProvider = new BrowserProvider(walletProvider);
+    const signer = await ethersProvider.getSigner();
+
+    const ClaimMuFromMumeNftContract = new Contract(abi.address, abi.abi, signer);
+
+    const txSent = await ClaimMuFromMumeNftContract.claimMu(itemData.value?.nftId);
+    await txSent.wait();
+    nftLoading.value = false;
+    useToast().success("NFT Updated", {
+      timeout: 5000
+    });
+    loadNftData();
+  } catch (err) {
+    let message = "Can't Set Price";
+    if (err instanceof Error) {
+      message = err.message
+    }
+
+    useToast().error(message, {
+      timeout: 5000
+    });
+    nftLoading.value = false;
+  }
+}
+
 
 let timerId: NodeJS.Timeout | undefined;
 onMounted(() => {

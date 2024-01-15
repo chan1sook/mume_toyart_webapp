@@ -67,6 +67,60 @@
             <div>
               {{ nftId }}
             </div>
+            <div class="pt-2">Wallet</div>
+            <div>
+              <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center">
+                <ClientOnly>
+                  <w3m-button class="inline-block" />
+                </ClientOnly>
+                <span v-if="useDevChain" class="text-red-300 capitalize">Dev Chain: For Testing Only</span>
+              </div>
+              <template v-if="!isSelectedChainCorrect">
+                <div class="italic">Not in JIB Chain!</div>
+              </template>
+            </div>
+            <template v-if="isWalletConnected">
+              <div>Price</div>
+              <div>
+                {{ formatUnits(priceWei, "ether") }} JBC
+              </div>
+              <template v-if="!!claimAbi">
+                <div class="pt-2">Claimable MU</div>
+                <div class="flex flex-row flex-wrap items-center gap-x-2">
+                  <input id="with-claim" v-model="nftOptions.muClaimable" type="checkbox" />
+                  <label for="with-claim">Claimable</label>
+                </div>
+                <template v-if="nftOptions.muClaimable">
+                  <div class="pt-2">MU Value</div>
+                  <div class="flex flex-col gap-y-1">
+                    <div class="flex flex-row">
+                      <MumeInput v-model="nftOptions.muClaimPrice" class="flex-1" placeholder="Token Unit"
+                        inputClasses="rounded-r-none" :invalid="!isMuPriceValid" />
+                      <MumeSelect v-model="nftOptions.muClaimPriceUnit" class="inline-flex" selectClasses="rounded-none">
+                        <option value="wei">Wei</option>
+                        <option value="gwei">GWei</option>
+                        <option value="ether">Ether</option>
+                      </MumeSelect>
+                      <MumeButton class="rounded-l-none" @click="setAutoMuPrice">Auto</MumeButton>
+                    </div>
+                    <div v-if="isMuPriceValid">
+                      <div class="italic">{{ formatUnits(muClaimWei, "ether") }} MU</div>
+                    </div>
+                  </div>
+                </template>
+              </template>
+              <div>NFT Validation</div>
+              <div>
+                <div v-if="isNftOptionsValid" class="flex flex-row gap-x-1 items-center" title="Valid">
+                  <Icon name="uil:check" size="1.5em" />
+                  <span class="hidden sm:block">Valid</span>
+                </div>
+                <div v-else class="flex flex-row gap-x-1 items-center" title="Invalid">
+                  <Icon name="uil:times" size="1.5em" />
+                  <span class="hidden sm:block">Invalid</span>
+                </div>
+              </div>
+            </template>
           </template>
           <template v-else>
             <div class="pt-2">NFT</div>
@@ -90,8 +144,8 @@
               <div class="pt-2">Price</div>
               <div class="flex flex-col gap-y-1">
                 <div class="flex flex-row">
-                  <MumeInput v-model="nftOptions.price" type="number" min="0" step="1" class="flex-1"
-                    placeholder="Token Unit" inputClasses="rounded-r-none" :invalid="!isNftPriceValid" />
+                  <MumeInput v-model="nftOptions.price" class="flex-1" placeholder="Token Unit"
+                    inputClasses="rounded-r-none" :invalid="!isNftPriceValid" />
                   <MumeSelect v-model="nftOptions.priceUnit" class="inline-flex" selectClasses="rounded-l-none">
                     <option value="wei">Wei</option>
                     <option value="gwei">GWei</option>
@@ -99,9 +153,34 @@
                   </MumeSelect>
                 </div>
                 <div v-if="isNftPriceValid">
-                  <div class="italic">{{ totalEthPrice }} JBC</div>
+                  <div class="italic">{{ formatUnits(priceWei, "ether") }} JBC</div>
                 </div>
               </div>
+              <template v-if="!!claimAbi">
+                <div class="pt-2">Claimable MU</div>
+                <div class="flex flex-row flex-wrap items-center gap-x-2">
+                  <input id="with-claim" v-model="nftOptions.muClaimable" type="checkbox" />
+                  <label for="with-claim">Claimable</label>
+                </div>
+                <template v-if="nftOptions.muClaimable">
+                  <div class="pt-2">MU Value</div>
+                  <div class="flex flex-col gap-y-1">
+                    <div class="flex flex-row">
+                      <MumeInput v-model="nftOptions.muClaimPrice" class="flex-1" placeholder="Token Unit"
+                        inputClasses="rounded-r-none" :invalid="!isMuPriceValid" />
+                      <MumeSelect v-model="nftOptions.muClaimPriceUnit" class="inline-flex" selectClasses="rounded-none">
+                        <option value="wei">Wei</option>
+                        <option value="gwei">GWei</option>
+                        <option value="ether">Ether</option>
+                      </MumeSelect>
+                      <MumeButton class="rounded-l-none" @click="setAutoMuPrice">Auto</MumeButton>
+                    </div>
+                    <div v-if="isMuPriceValid">
+                      <div class="italic">{{ formatUnits(muClaimWei, "ether") }} MU</div>
+                    </div>
+                  </div>
+                </template>
+              </template>
               <div class="pt-2">NFT Validation</div>
               <div>
                 <div v-if="isNftOptionsValid" class="flex flex-row gap-x-1 items-center" title="Valid">
@@ -154,9 +233,9 @@
 import { useToast } from "vue-toastification";
 import { getImagePath } from "~/utils/path";
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/vue'
-import { BrowserProvider, Contract, parseUnits, formatUnits } from 'ethers'
+import { BrowserProvider, Contract, parseUnits, formatUnits, toBigInt } from 'ethers'
 
-import { jbcchain, walletConnectId, metadata, getChainAbi } from "~/utils/eth"
+import { jbcchain, walletConnectId, metadata, getMumeNftAbi } from "~/utils/eth"
 
 definePageMeta({
   middleware: ["auth-user", "auth-dev"],
@@ -185,9 +264,13 @@ const itemData = ref({
 const originalCategories: Ref<string[]> = ref([]);
 const nftId: Ref<string | undefined> = ref(undefined);
 const nftOptions = ref({
+  nftDataLoaded: false,
   generated: false,
   price: "0",
   priceUnit: "ether",
+  muClaimable: false,
+  muClaimPrice: "0",
+  muClaimPriceUnit: "ether",
 });
 const loadingText: Ref<string | undefined> = ref(undefined);
 const originalImagePaths: Ref<string[]> = ref([]);
@@ -213,12 +296,16 @@ const isNftOptionsValid = computed(() => {
     return true;
   }
 
-  return isWalletConnected.value && isSelectedChainCorrect.value && isNftPriceValid.value;
+  return isWalletConnected.value && isSelectedChainCorrect.value && isNftPriceValid.value && (!!claimAbi || !value.muClaimable || isMuPriceValid.value);
 })
+
 const useDevChain = computed(() => useRuntimeConfig().public.USE_DEVCHAIN);
 const chainVersion = computed(() => useRuntimeConfig().public.CHAIN_VERSION);
-const chainAbi = computed(() => {
-  return getChainAbi(useDevChain.value, chainVersion.value);
+const nftAbi = computed(() => {
+  return getMumeNftAbi(useDevChain.value, chainVersion.value);
+});
+const claimAbi = computed(() => {
+  return getClaimMuAbi(useDevChain.value, chainVersion.value);
 });
 const isWalletConnected = ref(false);
 const isSelectedChainCorrect = ref(false);
@@ -226,6 +313,15 @@ const isNftPriceValid = computed(() => {
   const value = nftOptions.value;
   try {
     const ethValue = parseUnits(value.price, value.priceUnit);
+    return ethValue >= 0;
+  } catch (err) {
+    return false;
+  }
+})
+const isMuPriceValid = computed(() => {
+  const value = nftOptions.value;
+  try {
+    const ethValue = parseUnits(value.muClaimPrice, value.muClaimPriceUnit);
     return ethValue >= 0;
   } catch (err) {
     return false;
@@ -252,11 +348,18 @@ const selectedCertFileText = computed(() => {
   return `Old: ${originalCertPath.value}`;
 })
 
-const totalEthPrice = computed(() => {
+const priceWei = computed(() => {
   const price = nftOptions.value.price;
   const priceUnit = nftOptions.value.priceUnit;
   const weiValues = parseUnits(price, priceUnit);
-  return formatUnits(weiValues, "ether");
+  return weiValues;
+})
+
+const muClaimWei = computed(() => {
+  const price = nftOptions.value.muClaimPrice;
+  const priceUnit = nftOptions.value.muClaimPriceUnit;
+  const weiValues = parseUnits(price, priceUnit);
+  return weiValues;
 })
 
 async function loadItemData() {
@@ -295,6 +398,10 @@ async function loadItemData() {
     })
     originalCertPath.value = artItem.certificatePath;
     nftId.value = artItem.nftId;
+
+    if (typeof nftId.value === 'string') {
+      await loadNftData();
+    }
   } catch (err) {
     console.error(err);
 
@@ -307,6 +414,51 @@ async function loadItemData() {
   }
 
   itemLoading.value = false;
+}
+
+
+async function loadNftData() {
+  if (nftOptions.value.nftDataLoaded || !isWalletConnected.value || typeof nftId.value !== 'string') {
+    return;
+  }
+
+  nftOptions.value.nftDataLoaded = true;
+  loadingText.value = "Load NFT Data";
+
+  try {
+    const walletProvider = web3Modal.getWalletProvider()
+
+    if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+    if (!walletProvider) throw Error("WalletProvider not found")
+
+    const ethersProvider = new BrowserProvider(walletProvider);
+    const signer = await ethersProvider.getSigner();
+
+    const abi = nftAbi.value;
+    const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
+
+    const price = await MumeArtToyContract.priceOf(nftId.value) as bigint;
+    nftOptions.value.price = formatUnits(price, nftOptions.value.priceUnit);
+
+
+    const abi2 = claimAbi.value;
+    if (abi2) {
+      const MumeArtToyClaimContract = new Contract(abi2.address, abi2.abi, signer);
+      const canClaimMu = await MumeArtToyClaimContract.canClaimMu(nftId.value) as boolean;
+      const muGain = await MumeArtToyClaimContract.muGain(nftId.value) as bigint;
+      nftOptions.value.muClaimable = canClaimMu;
+      nftOptions.value.muClaimPrice = formatUnits(muGain, nftOptions.value.muClaimPriceUnit);
+    }
+  } catch (err) {
+    let message = "Can't Get NFT Data";
+    if (err instanceof Error) {
+      message = err.message
+    }
+
+    useToast().error(message, {
+      timeout: 5000
+    });
+  }
 }
 
 function updateImageFiles(ev: Event) {
@@ -376,6 +528,13 @@ function updateCertificateFile(ev: Event) {
       newCertificateFile.value = files[0];
     }
   }
+}
+
+function setAutoMuPrice() {
+  const wei = priceWei.value;
+  const muGain = wei * toBigInt("10");
+
+  nftOptions.value.muClaimPrice = formatUnits(muGain, nftOptions.value.muClaimPriceUnit);
 }
 
 async function uploadImage(fileData: BrowserUploadFileData) {
@@ -470,7 +629,7 @@ async function mintNft(itemId: string) {
   const ethersProvider = new BrowserProvider(walletProvider);
   const signer = await ethersProvider.getSigner();
 
-  const abi = chainAbi.value;
+  const abi = nftAbi.value;
   const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
 
   const txSent = await MumeArtToyContract.mint(
@@ -485,6 +644,50 @@ async function mintNft(itemId: string) {
     return log.args[0] as (bigint | undefined);
   }
   return undefined;
+}
+
+async function setMuClaim(nftId: bigint) {
+  const abi = claimAbi.value;
+
+  if (!abi) {
+    return;
+  }
+
+  const walletProvider = web3Modal.getWalletProvider()
+
+  if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+  if (!walletProvider) throw Error("WalletProvider not found")
+
+  const ethersProvider = new BrowserProvider(walletProvider);
+  const signer = await ethersProvider.getSigner();
+
+  const ClaimMuFromMumeNftContract = new Contract(abi.address, abi.abi, signer);
+
+  if (nftOptions.value.generated && nftOptions.value.muClaimable) {
+    const txSent = await ClaimMuFromMumeNftContract.setNftClaimMuPromotion(
+      nftId,
+      parseUnits(nftOptions.value.muClaimPrice, nftOptions.value.muClaimPriceUnit),
+    );
+
+    await txSent.wait();
+  } else if (!nftOptions.value.generated) {
+    if (!nftOptions.value.muClaimable) {
+      const txSent = await ClaimMuFromMumeNftContract.setNftCanClaimMu(
+        nftId,
+        false,
+      );
+
+      await txSent.wait();
+    } else {
+      const txSent = await ClaimMuFromMumeNftContract.setNftClaimMuPromotion(
+        nftId,
+        parseUnits(nftOptions.value.muClaimPrice, nftOptions.value.muClaimPriceUnit),
+      );
+
+      await txSent.wait();
+    }
+  }
+
 }
 
 async function editItem() {
@@ -503,10 +706,19 @@ async function editItem() {
       certPath = await uploadCert(newCertificateFile.value);
     }
 
-    let nftId: bigint | undefined;
+    let newNftId: bigint | undefined;
     if (!alreadyHaveNft.value && nftOptions.value.generated) {
       loadingText.value = "Mining NFT";
-      nftId = await mintNft(id.toString());
+      newNftId = await mintNft(id.toString());
+    }
+
+    if (nftId.value || typeof newNftId !== "undefined") {
+      loadingText.value = "Set Mu Claim";
+      if (nftId.value) {
+        await setMuClaim(toBigInt(nftId.value));
+      } else {
+        await setMuClaim(newNftId as bigint);
+      }
     }
 
 
@@ -518,9 +730,9 @@ async function editItem() {
       categories: itemData.value.categories,
       imagePaths: imgPaths,
       certificatePath: certPath,
-      nftId: typeof nftId !== "undefined" ? nftId.toString() : undefined,
-      devChain: typeof nftId !== "undefined" ? useDevChain.value : undefined,
-      chainVersion: typeof nftId !== "undefined" ? chainVersion.value : undefined,
+      nftId: typeof newNftId !== "undefined" ? newNftId.toString() : undefined,
+      devChain: typeof newNftId !== "undefined" ? useDevChain.value : undefined,
+      chainVersion: typeof newNftId !== "undefined" ? chainVersion.value : undefined,
     }
 
     loadingText.value = "Update Item Data";
@@ -564,6 +776,11 @@ onMounted(() => {
   timerId = setInterval(() => {
     isWalletConnected.value = !!(web3Modal.getIsConnected() && web3Modal.getWalletProvider());
     isSelectedChainCorrect.value = web3Modal.getChainId() === jbcchain.chainId;
+
+    if (isWalletConnected.value && !
+      nftOptions.value.nftDataLoaded) {
+      loadNftData();
+    }
   }, 200);
 })
 

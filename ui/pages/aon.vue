@@ -18,8 +18,8 @@
       <div class="flex flex-row justify-center">
         <MumeButton type="submit" :disabled="!isFormValid || formLoading" title="Login"
           class="flex flex-row gap-x-2 items-center">
-          <Icon name="uil:signin" />
           <span class="hidden sm:inline">Login</span>
+          <Icon name="uil:signin" />
         </MumeButton>
       </div>
     </form>
