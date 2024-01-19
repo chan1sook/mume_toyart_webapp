@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getPrettyChainName } from "~/utils/eth"
+import { getPrettyChainName } from "~/utils/web3"
 import { getImagePath, getFakeImagePath } from "~/utils/path";
 
 const props = defineProps<{
@@ -43,4 +43,4 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "click", v: string): void;
 }>();
-</script>
+</script>~/utils/web3

@@ -4,6 +4,7 @@ import {
   isUseDevchain,
   getDevChainVersion,
   getProdChainVersion,
+  getHideOldNftFlag,
 } from "../configs/runtime.js";
 import ArtItemModel from "../models/artitem.js";
 import mongoose, { isObjectIdOrHexString } from "mongoose";
@@ -28,7 +29,7 @@ export function getArtItemByItemId(id) {
     });
   }
 
-  // Still show hidden
+  // Alway queryable event hide old nft
   return ArtItemModel.findOne({
     itemId: id,
     devChain: false,
@@ -46,7 +47,10 @@ export async function getArtItemCategoriesMetadata() {
     // Restricted current + nft only
     query.devChain = false;
     query.nftId = { $exists: true };
-    query.chainVersion = getProdChainVersion();
+
+    if (getHideOldNftFlag()) {
+      query.chainVersion = getProdChainVersion();
+    }
   } else {
     query.$or = getDevchainOrQuery();
   }
@@ -81,7 +85,9 @@ export function searchAllArtItems(nextFrom) {
   if (!isUseDevchain()) {
     query.devChain = false;
     query.nftId = { $exists: true };
-    query.chainVersion = getProdChainVersion();
+    if (getHideOldNftFlag()) {
+      query.chainVersion = getProdChainVersion();
+    }
   } else {
     query.$or = getDevchainOrQuery();
   }
@@ -106,7 +112,9 @@ export function searchUncategorizedArtItems(nextFrom) {
     query.devChain = false;
     query.$or = baseOrQuery;
     query.nftId = { $exists: true };
-    query.chainVersion = getProdChainVersion();
+    if (getHideOldNftFlag()) {
+      query.chainVersion = getProdChainVersion();
+    }
   } else {
     query.$and = [
       {
@@ -135,7 +143,9 @@ export function searchCategorizedArtItems(categoryName = "", nextFrom) {
   if (!isUseDevchain()) {
     query.devChain = false;
     query.nftId = { $exists: true };
-    query.chainVersion = getProdChainVersion();
+    if (getHideOldNftFlag()) {
+      query.chainVersion = getProdChainVersion();
+    }
   } else {
     query.$or = getDevchainOrQuery();
   }
@@ -158,7 +168,9 @@ export function searchOtherArtItems(keyword = "", nextFrom) {
     query.devChain = false;
     query.$or = baseOrQuery;
     query.nftId = { $exists: true };
-    query.chainVersion = getProdChainVersion();
+    if (getHideOldNftFlag()) {
+      query.chainVersion = getProdChainVersion();
+    }
   } else {
     query.$and = [
       {

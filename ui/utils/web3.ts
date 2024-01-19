@@ -13,6 +13,10 @@ import devClaimMuAbi1 from "~/assets/jbc-chain/ClaimMuFromMumeNftB6Contract.json
 import productionClaimMuAbi1 from "~/assets/jbc-chain/ClaimMuFromMumeNft1Contract.json";
 import productionClaimMuAbi2 from "~/assets/jbc-chain/ClaimMuFromMumeNft2Contract.json";
 
+import devLendNftAbi1 from "~/assets/jbc-chain/LendMumeNftB6Contract.json";
+import productionLendNftAbi1 from "~/assets/jbc-chain/LendMumeNft1Contract.json";
+import productionLendNftAbi2 from "~/assets/jbc-chain/LendMumeNft2Contract.json";
+
 export const jbcchain = {
   chainId: 8899,
   name: "JIBCHAIN",
@@ -32,26 +36,26 @@ export function getMumeNftAbi(devChain: boolean, version: number) {
   if (devChain) {
     switch (version) {
       case 1:
-        console.log("Use Dev Chain: V1 (B2)");
+        console.log("NFT Dev Chain: V1 (B2)");
         return devNftAbi1;
       case 2:
-        console.log("Use Dev Chain: V2 (B4)");
+        console.log("NFT Dev Chain: V2 (B4)");
         return devNftAbi2;
       case 3:
-        console.log("Use Dev Chain: V3 (B5)");
+        console.log("NFT Dev Chain: V3 (B5)");
         return devNftAbi3;
       default:
-        console.log("Use Dev Chain: V4 (B6)");
+        console.log("NFT Dev Chain: V4 (B6)");
         return devNftAbi4;
     }
   }
 
   switch (version) {
     case 1:
-      console.log("Use Production Chain: V1");
+      console.log("NFT Production Chain: V1");
       return productionNftAbi1;
     default:
-      console.log("Use Production Chain: V2");
+      console.log("NFT Production Chain: V2");
       return productionNftAbi2;
   }
 }
@@ -125,17 +129,51 @@ export function getClaimMuAbi(devChain: boolean, version: number) {
         console.log("N/A");
         return null;
       default:
-        console.log("Use Dev Chain: V4 (to B6)");
+        console.log("ClaimMu Dev Chain: B6");
         return devClaimMuAbi1;
     }
   }
 
   switch (version) {
     case 1:
-      console.log("Use Production Chain: V1 (Link 1)");
+      console.log("ClaimMu Production Chain: NFT1");
       return productionClaimMuAbi1;
     default:
-      console.log("Use Production Chain: V2 (Link 2)");
+      console.log("ClaimMu Production Chain: NFT2");
       return productionClaimMuAbi2;
   }
+}
+
+export function getLendNftAbi(devChain: boolean, version: number) {
+  if (devChain) {
+    switch (version) {
+      case 1:
+      case 2:
+      case 3:
+        console.log("N/A");
+        return null;
+      default:
+        console.log("LendNft Dev Chain: B6");
+        return devLendNftAbi1;
+    }
+  }
+
+  switch (version) {
+    case 1:
+      console.log("LendNft Production Chain: NFT1");
+      return productionLendNftAbi1;
+    default:
+      console.log("LendNft Production Chain: NFT2");
+      return productionLendNftAbi2;
+  }
+}
+
+export function isLendContractAddress(address: string) {
+  const addresses = [
+    devLendNftAbi1,
+    productionLendNftAbi1,
+    productionLendNftAbi2,
+  ].map((ele) => ele.address.toLowerCase());
+
+  return addresses.includes(address.toLowerCase());
 }

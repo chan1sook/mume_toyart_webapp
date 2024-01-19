@@ -5,11 +5,11 @@ module.exports = async function (hre) {
   const { developer, mumeNft1Contract, muTokenContract } =
     await getNamedAccounts();
 
-  await deploy("ClaimMuFromMumeNftContract", {
+  await deploy("LendMumeNftContract", {
     from: developer,
     args: [developer, mumeNft1Contract, muTokenContract],
     log: true,
   });
 };
 
-module.exports.tags = ["ClaimMuFromMumeNftContract"];
+module.exports.tags = ["LendMumeNft1Contract"];

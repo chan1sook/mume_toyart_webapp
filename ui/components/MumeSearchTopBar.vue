@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/vue'
 import { BrowserProvider, Contract, formatUnits, parseUnits, toBigInt } from 'ethers';
-import { getMuAbi } from '~/utils/eth';
+import { getMuAbi } from '~/utils/web3';
 
 const props = defineProps<{
   modelValue?: string,
@@ -123,4 +123,4 @@ onMounted(() => {
 onBeforeUnmount(() => {
   clearInterval(timerId);
 });
-</script>
+</script>~/utils/web3

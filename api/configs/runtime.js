@@ -64,3 +64,8 @@ export function getQueryLimits() {
   }
   return n;
 }
+
+export function getHideOldNftFlag() {
+  const value = process.env.HIDE_OLD_NFT;
+  return !!value;
+}

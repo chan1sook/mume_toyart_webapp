@@ -160,7 +160,7 @@ import { useToast } from "vue-toastification";
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/vue'
 import { BrowserProvider, Contract, parseUnits, formatUnits, toBigInt } from 'ethers'
 
-import { jbcchain, walletConnectId, metadata, getMumeNftAbi } from "~/utils/eth"
+import { jbcchain, walletConnectId, metadata, getMumeNftAbi } from "~/utils/web3"
 
 useHead({
   title: `MUME Art-Toy | Add Item`,
@@ -592,3 +592,4 @@ onBeforeUnmount(() => {
   @apply border-white;
 }
 </style>
+~/utils/web3

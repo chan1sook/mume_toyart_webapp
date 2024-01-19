@@ -23,6 +23,13 @@
             Exchange MU
           </MumeIndexMenu>
         </div>
+        <div class="flex flex-col items-center">
+          <NuxtLink class="underline"
+            href="https://docs.google.com/document/d/1ptDmD8jMQcAokCoMgyJIcQ5FamZSFLnMXHbKKLvyQeE/edit#heading=h.vvdwee4g9yo2"
+            external target="_blank">
+            การ List เหรียญ MU บน Metamask
+          </NuxtLink>
+        </div>
       </div>
     </div>
     <MumeFixedBar></MumeFixedBar>

@@ -235,7 +235,7 @@ import { getImagePath } from "~/utils/path";
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/vue'
 import { BrowserProvider, Contract, parseUnits, formatUnits, toBigInt } from 'ethers'
 
-import { jbcchain, walletConnectId, metadata, getMumeNftAbi } from "~/utils/eth"
+import { jbcchain, walletConnectId, metadata, getMumeNftAbi } from "~/utils/web3"
 
 definePageMeta({
   middleware: ["auth-user", "auth-dev"],
@@ -299,14 +299,16 @@ const isNftOptionsValid = computed(() => {
   return isWalletConnected.value && isSelectedChainCorrect.value && isNftPriceValid.value && (!!claimAbi || !value.muClaimable || isMuPriceValid.value);
 })
 
-const useDevChain = computed(() => useRuntimeConfig().public.USE_DEVCHAIN);
-const chainVersion = computed(() => useRuntimeConfig().public.CHAIN_VERSION);
+
+const useDevChain = ref(useRuntimeConfig().public.USE_DEVCHAIN);
+const chainVersion = ref(useRuntimeConfig().public.CHAIN_VERSION);
 const nftAbi = computed(() => {
   return getMumeNftAbi(useDevChain.value, chainVersion.value);
 });
 const claimAbi = computed(() => {
   return getClaimMuAbi(useDevChain.value, chainVersion.value);
 });
+
 const isWalletConnected = ref(false);
 const isSelectedChainCorrect = ref(false);
 const isNftPriceValid = computed(() => {
@@ -398,6 +400,12 @@ async function loadItemData() {
     })
     originalCertPath.value = artItem.certificatePath;
     nftId.value = artItem.nftId;
+    useDevChain.value = artItem.devChain;
+    chainVersion.value = artItem.chainVersion;
+
+    console.log("ChainData", useDevChain.value, chainVersion.value)
+    console.log("NFT Address", nftAbi.value.address)
+    console.log("ClaimMU Address", claimAbi.value?.address)
 
     if (typeof nftId.value === 'string') {
       await loadNftData();
@@ -821,4 +829,4 @@ loadItemData();
 :deep(.vs__dropdown-toggle:hover) {
   @apply border-white;
 }
-</style>
+</style>~/utils/web3

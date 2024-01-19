@@ -29,7 +29,7 @@
         <div class="w-full max-w-5xl">
           <div class="flex flex-row justify-start overflow-x-auto">
             <div class="inline-flex flex-row items-center">
-              <div v-for="tab of tabs"
+              <div v-for="tab of avaliableTabs"
                 class="transistion duration-200 px-2 py-1 border border-gray-400 rounded-t-md cursor-pointer"
                 :class="[currentTab === tab.id ? 'bg-slate-400/50' : '']" @click="currentTab = tab.id">
                 {{ tab.label }}
@@ -37,7 +37,7 @@
             </div>
           </div>
           <div v-if="currentTab === 'info'"
-            class="border border-gray-400 rounded-b-md px-2 py-2 custom-grid gap-x-2 gap-y-1">
+            class="border border-gray-400 rounded-b-md px-2 py-2 custom-grid gap-x-2 gap-y-1 overflow-x-auto">
             <div class="font-bold">Name</div>
             <div>{{ itemData.name }}</div>
             <div class="font-bold">MAC</div>
@@ -106,178 +106,224 @@
               </div>
             </div>
           </div>
-          <div v-if="currentTab === 'nft'"
-            class="border border-gray-400 rounded-b-md px-2 py-2 custom-grid gap-x-2 gap-y-1">
-            <template v-if="typeof itemData.nftId === 'string'">
-              <template v-if="nftNotFound">
-                <div class="col-span-2 text-center text-2xl italic">NFT not exists</div>
-              </template>
-              <template v-else>
-                <div>Blockscan</div>
-                <div>
-                  <NuxtLink :href="formatBlockscanLink(itemData.nftId)" external class="underline mr-2">
-                    {{ formatBlockscanLink(itemData.nftId) }}
-                  </NuxtLink>
-                  <span title="Copy Link">
-                    <Icon name="uil:copy" class="cursor-pointer" @click="copyText(formatBlockscanLink(itemData.nftId))" />
+          <div v-if="currentTab === 'nft' && typeof itemData.nftId === 'string'"
+            class="border border-gray-400 rounded-b-md px-2 py-2 custom-grid gap-x-2 gap-y-1 overflow-x-auto">
+            <template v-if="nftNotFound">
+              <div class="col-span-2 text-center text-2xl italic">NFT not exists</div>
+            </template>
+            <template v-else>
+              <div>Blockscan</div>
+              <div>
+                <NuxtLink :href="formatBlockscanLink(itemData.nftId)" external class="underline mr-2">
+                  {{ formatBlockscanLink(itemData.nftId) }}
+                </NuxtLink>
+                <span title="Copy Link">
+                  <Icon name="uil:copy" class="cursor-pointer" @click="copyText(formatBlockscanLink(itemData.nftId))" />
 
-                  </span>
+                </span>
+              </div>
+              <div class="pt-2">Wallet</div>
+              <div>
+                <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center">
+                  <ClientOnly>
+                    <w3m-button class="inline-block" />
+                  </ClientOnly>
+                  <span v-if="useDevChain" class="text-red-300 capitalize">Dev Chain: For Testing Only</span>
                 </div>
-                <div class="pt-2">Wallet</div>
-                <div>
-                  <div class="flex flex-row flex-wrap gap-x-2 gap-y-1 items-center">
-                    <ClientOnly>
-                      <w3m-button class="inline-block" />
-                    </ClientOnly>
-                    <span v-if="useDevChain" class="text-red-300 capitalize">Dev Chain: For Testing Only</span>
-                  </div>
-                  <template v-if="!isSelectedChainCorrect">
-                    <div class="italic">Not in JIB Chain!</div>
-                  </template>
+                <template v-if="!isSelectedChainCorrect">
+                  <div class="italic">Not in JIB Chain!</div>
+                </template>
+              </div>
+            </template>
+            <template v-if="nftData">
+              <div class="pt-2">Owner</div>
+              <div>
+                <div class="flex flex-row">
+                  <MumeInput :model-value="nftData.owner" class="flex-1" readonly inputClasses="rounded-r-none" />
+                  <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1 rounded-l-none"
+                    title="Copy Address" @click="copyText(nftData.owner)">
+                    <Icon name="uil:copy" />
+                    <span class="hidden sm:block">Copy</span>
+                  </MumeButton>
                 </div>
-              </template>
-              <template v-if="nftData">
-                <div class="pt-2">Owner</div>
-                <div>
+              </div>
+              <div class="pt-2">
+                Price
+              </div>
+              <div class="flex flex-col gap-y-1">
+                <template v-if="!nftOptions.edited">
                   <div class="flex flex-row">
-                    <MumeInput :model-value="nftData.owner" class="flex-1" readonly inputClasses="rounded-r-none" />
-                    <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1 rounded-l-none"
-                      title="Copy Address" @click="copyText(nftData.owner)">
-                      <Icon name="uil:copy" />
-                      <span class="hidden sm:block">Copy</span>
+                    <MumeInput :model-value="formatUnits(nftData.price, nftOptions.priceUnit)" class="flex-1" readonly
+                      inputClasses="rounded-r-none" />
+                    <MumeSelect v-model="nftOptions.priceUnit" class="inline-flex" selectClasses="rounded-l-none">
+                      <option value="wei">Wei</option>
+                      <option value="gwei">GWei</option>
+                      <option value="ether">Ether</option>
+                    </MumeSelect>
+                  </div>
+                  <div>
+                    <div class="italic">{{ formatUnits(priceWei, "ether") }} JBC</div>
+                  </div>
+                  <div v-if="isNftOwned" class="flex flex-row justify-end">
+                    <MumeButton type="button" class="flex flex-row gap-x-2 items-center" title="Adjust Price"
+                      @click="startEditPrice">
+                      <span class="hidden sm:block">Edit</span>
+                      <Icon name="uil:pen" />
                     </MumeButton>
                   </div>
+                </template>
+                <template v-else>
+                  <div class="flex flex-row">
+                    <MumeInput v-if="nftOptions.edited" v-model="nftOptions.price" class="flex-1"
+                      inputClasses="rounded-r-none" />
+                    <MumeSelect v-model="nftOptions.priceUnit" class="inline-flex" selectClasses="rounded-l-none">
+                      <option value="wei">Wei</option>
+                      <option value="gwei">GWei</option>
+                      <option value="ether">Ether</option>
+                    </MumeSelect>
+                  </div>
+                  <div>
+                    <div class="italic">{{ formatUnits(newPriceWei, 'ether') }} JBC</div>
+                  </div>
+                  <div class="flex flex-row gap-x-2 items-center justify-end">
+                    <MumeButton type="button" class="flex flex-row gap-x-2 items-center" title="Cancel Update"
+                      @click="cancelEditPrice">
+                      <span class="hidden sm:block">Cancel</span>
+                      <Icon name="material-symbols:undo" />
+                    </MumeButton>
+                    <MumeButton type="button" class="flex flex-row gap-x-2 items-center" title="Update Price"
+                      @click="updatePrice">
+                      <span class="hidden sm:block">Update</span>
+                      <Icon name="uil:save" />
+                    </MumeButton>
+                  </div>
+                </template>
+              </div>
+              <div :class="[isNftOwned ? 'pt-2' : '']">Tradable</div>
+              <div>
+                <div class="flex flex-row gap-x-2">
+                  <div v-if="nftData.tradable" class="flex flex-row gap-x-1 items-center" title="Tradeable">
+                    <Icon name="uil:check" size="1.5em" />
+                    <span class="hidden sm:block">Tradeable</span>
+                  </div>
+                  <div v-else class="flex flex-row gap-x-1 items-center" title="Not Tradeable">
+                    <Icon name="uil:times" size="1.5em" />
+                    <span class="hidden sm:block">Not Tradeable</span>
+                  </div>
+                  <MumeButton v-if="isNftOwned" type="button" class="ml-auto" title="Toggle Tradeable"
+                    @click="toggleTradeableFlag">
+                    Toggle
+                  </MumeButton>
                 </div>
-                <div class="pt-2">
-                  Price
-                </div>
-                <div class="flex flex-col gap-y-1">
-                  <template v-if="!nftOptions.edited">
-                    <div class="flex flex-row">
-                      <MumeInput :model-value="formatUnits(nftData.price, nftOptions.priceUnit)" class="flex-1" readonly
-                        inputClasses="rounded-r-none" />
-                      <MumeSelect v-model="nftOptions.priceUnit" class="inline-flex" selectClasses="rounded-l-none">
-                        <option value="wei">Wei</option>
-                        <option value="gwei">GWei</option>
-                        <option value="ether">Ether</option>
-                      </MumeSelect>
-                    </div>
-                    <div>
-                      <div class="italic">{{ formatUnits(priceWei, "ether") }} JBC</div>
-                    </div>
-                    <div v-if="isNftOwned" class="flex flex-row justify-end">
-                      <MumeButton type="button" class="flex flex-row gap-x-2 items-center" title="Adjust Price"
-                        @click="startEditPrice">
-                        <span class="hidden sm:block">Edit</span>
-                        <Icon name="uil:pen" />
-                      </MumeButton>
-                    </div>
-                  </template>
-                  <template v-else>
-                    <div class="flex flex-row">
-                      <MumeInput v-if="nftOptions.edited" v-model="nftOptions.price" class="flex-1"
-                        inputClasses="rounded-r-none" />
-                      <MumeSelect v-model="nftOptions.priceUnit" class="inline-flex" selectClasses="rounded-l-none">
-                        <option value="wei">Wei</option>
-                        <option value="gwei">GWei</option>
-                        <option value="ether">Ether</option>
-                      </MumeSelect>
-                    </div>
-                    <div>
-                      <div class="italic">{{ formatUnits(newPriceWei, 'ether') }} JBC</div>
-                    </div>
-                    <div class="flex flex-row gap-x-2 items-center justify-end">
-                      <MumeButton type="button" class="flex flex-row gap-x-2 items-center" title="Cancel Update"
-                        @click="cancelEditPrice">
-                        <span class="hidden sm:block">Cancel</span>
-                        <Icon name="material-symbols:undo" />
-                      </MumeButton>
-                      <MumeButton type="button" class="flex flex-row gap-x-2 items-center" title="Update Price"
-                        @click="updatePrice">
-                        <span class="hidden sm:block">Update</span>
-                        <Icon name="uil:save" />
-                      </MumeButton>
-                    </div>
-                  </template>
-                </div>
-                <div :class="[isNftOwned ? 'pt-2' : '']">Tradable</div>
+              </div>
+              <template v-if="contractCodeSignature > 1">
+                <div :class="[isNftOwned ? 'pt-2' : '']">Sellable</div>
                 <div>
                   <div class="flex flex-row gap-x-2">
-                    <div v-if="nftData.tradable" class="flex flex-row gap-x-1 items-center" title="Tradeable">
+                    <div v-if="nftData.sellable" class="flex flex-row gap-x-1 items-center" title="Sellable">
                       <Icon name="uil:check" size="1.5em" />
-                      <span class="hidden sm:block">Tradeable</span>
+                      <span class="hidden sm:block">Sellable</span>
                     </div>
-                    <div v-else class="flex flex-row gap-x-1 items-center" title="Not Tradeable">
+                    <div v-else class="flex flex-row gap-x-1 items-center" title="Not Sellable">
                       <Icon name="uil:times" size="1.5em" />
-                      <span class="hidden sm:block">Not Tradeable</span>
+                      <span class="hidden sm:block">Not Sellable</span>
                     </div>
-                    <MumeButton v-if="isNftOwned" type="button" class="ml-auto" title="Toggle Tradeable"
-                      @click="toggleTradeableFlag">
+                    <MumeButton v-if="isNftOwned" type="button" class="ml-auto" title="Toggle Sellable"
+                      @click="toggleSellableFlag">
                       Toggle
                     </MumeButton>
                   </div>
                 </div>
-                <template v-if="contractCodeSignature > 1">
-                  <div :class="[isNftOwned ? 'pt-2' : '']">Sellable</div>
-                  <div>
-                    <div class="flex flex-row gap-x-2">
-                      <div v-if="nftData.sellable" class="flex flex-row gap-x-1 items-center" title="Sellable">
-                        <Icon name="uil:check" size="1.5em" />
-                        <span class="hidden sm:block">Sellable</span>
-                      </div>
-                      <div v-else class="flex flex-row gap-x-1 items-center" title="Not Sellable">
-                        <Icon name="uil:times" size="1.5em" />
-                        <span class="hidden sm:block">Not Sellable</span>
-                      </div>
-                      <MumeButton v-if="isNftOwned" type="button" class="ml-auto" title="Toggle Sellable"
-                        @click="toggleSellableFlag">
-                        Toggle
-                      </MumeButton>
-                    </div>
+              </template>
+              <div v-if="!isNftOwned && nftData.sellable && contractCodeSignature > 1" class="col-span-2">
+                <MumeButton type="button" title="Buy NFT" @click="buyNft">
+                  Buy NFT
+                </MumeButton>
+              </div>
+              <template v-if="isNftOwned && isNftTradeable">
+                <div class="pt-2">Transfer To</div>
+                <div>
+                  <div class="flex flex-row">
+                    <MumeInput v-model="nftOptions.targetAddress" type="text" class="flex-1" inputClasses="rounded-r-none"
+                      :invalid="!isTargetEthAddress" />
+                    <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1 rounded-l-none"
+                      title="Transfer NFT" @click="transferToken">
+                      <Icon name="bi:send" />
+                      <span class="hidden sm:block">Send</span>
+                    </MumeButton>
                   </div>
-                </template>
-                <div v-if="!isNftOwned && nftData.sellable" class="col-span-2">
-                  <MumeButton type="button" title="Buy NFT" @click="buyNft">
-                    Buy NFT
+                </div>
+              </template>
+              <template v-if="isNftOwned">
+                <div class="col-span-2 my-2 flex flex-row items-center justify-center">
+                  <MumeButton v-if="claimMuData.muClaimable" type="button"
+                    class="inline-flex flex-row items-center gap-x-1" title="Claim MU" @click="claimMu">
+                    <Icon name="mdi:cash-refund" />
+                    <span>Claim MU</span>
+                  </MumeButton>
+                  <MumeButton v-else type="button" class="inline-flex flex-row items-center gap-x-1" title="MU Claimed"
+                    disabled>
+                    <Icon name="mdi:cash-refund" />
+                    <span>MU Claimed</span>
                   </MumeButton>
                 </div>
-                <template v-if="isNftOwned && isNftTradeable">
-                  <div class="pt-2">Transfer To</div>
-                  <div>
-                    <div class="flex flex-row">
-                      <MumeInput v-model="nftOptions.targetAddress" type="text" class="flex-1"
-                        inputClasses="rounded-r-none" :invalid="!isTargetEthAddress" />
-                      <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1 rounded-l-none"
-                        title="Transfer NFT" @click="transferToken">
-                        <Icon name="bi:send" />
-                        <span class="hidden sm:block">Send</span>
-                      </MumeButton>
-                    </div>
-                  </div>
-                </template>
-                <template v-if="isNftOwned">
-                  <div class="col-span-2 my-2 flex flex-row items-center justify-center">
-                    <MumeButton v-if="nftOptions.muClaimable" type="button"
-                      class="inline-flex flex-row items-center gap-x-1" title="Claim MU" @click="claimMu">
-                      <Icon name="mdi:cash-refund" />
-                      <span class="hidden sm:block">Claim MU</span>
-                    </MumeButton>
-                    <MumeButton v-else type="button" class="inline-flex flex-row items-center gap-x-1" title="MU Claimed"
-                      disabled>
-                      <Icon name="mdi:cash-refund" />
-                      <span class="hidden sm:block">MU Claimed</span>
-                    </MumeButton>
-                  </div>
-                </template>
               </template>
             </template>
+          </div>
+          <div v-if="currentTab === 'stake' && typeof itemData.nftId === 'string' && (isNftOwned || stakeData.nftLending)"
+            class="border border-gray-400 rounded-b-md px-2 py-2 custom-grid gap-x-2 gap-y-1 overflow-x-auto">
+            <div class="pt-2">Claimable MU</div>
+            <div class="flex flex-row items-center">
+              <div class="flex-1 flex flex-col">
+                <div>{{ formatUnits(stakeData.muToClaim, 'ether') }} MU</div>
+              </div>
+              <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1" title="Claim"
+                @click="claimStakeMu">
+                <Icon name="mdi:cash-refund" />
+                <span class="hidden sm:block">Claim</span>
+              </MumeButton>
+            </div>
+            <div>Reward Rate</div>
+            <div>{{ formatUnits(stakeData.rewardMuPerDay, 'ether') }} MU/Day</div>
+
+            <div v-if="!isNftLending" class="col-span-2 my-2 flex flex-row items-center justify-center">
+              <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1" title="Stake Nft"
+                @click="stakeNft">
+                <IconIntenseBurner />
+                <span>Stake Nft</span>
+              </MumeButton>
+            </div>
             <template v-else>
-              <div>NFT</div>
-              <div class="text-center text-2xl italic">This item isn't NFT</div>
+              <div>Staking Since</div>
+              <div>
+                {{ dayjs(stakeData.nftLendAt).format("YYYY-MM-DD HH:mm:ss") }}
+              </div>
+              <div class="pt-2">MU Generate</div>
+              <div class="flex flex-row items-center">
+                <div class="flex-1 flex flex-col">
+                  <div>{{ formatUnits(stakeData.muStakePending, 'ether') }} MU</div>
+                </div>
+                <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1" title="Collect"
+                  @click="collectStakeReward">
+                  <Icon name="uil:money-withdraw" />
+                  <span class="hidden sm:block">Collect</span>
+                </MumeButton>
+              </div>
+
+              <div class="col-span-2 my-2 flex flex-row items-center justify-center gap-x-2">
+                <MumeButton type="button" class="inline-flex flex-row items-center gap-x-1" title="Claim Nft"
+                  @click="claimStakeNft">
+                  <IconIntenseBurner />
+                  <span>Claim Nft</span>
+                </MumeButton>
+              </div>
             </template>
           </div>
         </div>
       </div>
+      <div class="text-xs text-center">Fonts made from <NuxtLink href="http://www.onlinewebfonts.com" external
+          target="_blank">Web Fonts
+        </NuxtLink> is licensed by CC BY 4.0</div>
     </div>
     <MumeFixedBar hide-additem>
       <NuxtLink v-if="isDevUser" :href="`/admin/edit-item/${id}`" title="Edit This Item"
@@ -301,7 +347,9 @@ import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/vue'
 import { BrowserProvider, Contract, formatUnits, parseUnits, toBigInt } from 'ethers'
 import { useToast } from "vue-toastification";
 
-import { jbcchain, walletConnectId, metadata, getMumeNftAbi, getCodeSignatureByChain } from "~/utils/eth"
+import IconIntenseBurner from '~/assets/Incense_burner.svg'
+
+import { jbcchain, walletConnectId, metadata, getMumeNftAbi, getLendNftAbi, getCodeSignatureByChain, isLendContractAddress } from "~/utils/web3"
 import { getImagePath, getCertPath } from "~/utils/path";
 import { historyActionPretty } from "~/utils/history";
 
@@ -330,8 +378,17 @@ const nftOptions = ref({
   price: "",
   priceUnit: "ether",
   targetAddress: "",
+});
+const claimMuData = ref({
   muClaimable: false,
+});
 
+const stakeData = ref({
+  nftLending: false,
+  nftLendAt: new Date(),
+  rewardMuPerDay: toBigInt("0"),
+  muStakePending: toBigInt("0"),
+  muToClaim: toBigInt("0"),
 });
 
 const isNftTradeable = computed(() => {
@@ -344,15 +401,6 @@ const isNftTradeable = computed(() => {
 const historyLoading = ref(false);
 const historyShow = ref(false);
 const selectedImgIndex: Ref<number | undefined> = ref(undefined);
-const tabs = ref([{
-  label: "Info",
-  id: 'info',
-},
-{
-  label: "NFT",
-  id: 'nft',
-}]);
-const currentTab = ref(tabs.value[0].id);
 
 const isDevUser = computed(() => isDeveloperUser(sessionData.value));
 const useDevChain = computed(() => !!itemData.value ? itemData.value.devChain : useRuntimeConfig().public.USE_DEVCHAIN);
@@ -363,6 +411,10 @@ const nftAbi = computed(() => {
 const claimAbi = computed(() => {
   return getClaimMuAbi(useDevChain.value, chainVersion.value);
 });
+const lendAbi = computed(() => {
+  return getLendNftAbi(useDevChain.value, chainVersion.value);
+});
+
 const contractCodeSignature = computed(() => {
   return getCodeSignatureByChain(useDevChain.value, chainVersion.value);
 });
@@ -370,12 +422,9 @@ const isWalletConnected = ref(false);
 const isSelectedChainCorrect = ref(false);
 const isNftValid = computed(() => isWalletConnected.value && isSelectedChainCorrect.value);
 const isNftOwned = computed(() => web3Modal.getAddress()?.toLowerCase() === nftData.value?.owner.toLowerCase());
+const isNftLending = computed(() => nftData.value?.owner && isLendContractAddress(nftData.value?.owner));
+
 const isTargetEthAddress = computed(() => isAddress(nftOptions.value.targetAddress))
-watch(isWalletConnected, (value) => {
-  if (value && !nftData.value) {
-    loadNftData();
-  }
-});
 
 const priceWei = computed(() => {
   if (!nftData.value) {
@@ -390,6 +439,31 @@ const newPriceWei = computed(() => {
   const weiValues = parseUnits(price, priceUnit);
   return weiValues;
 })
+
+const avaliableTabs = computed(() => {
+  const basicTabs = [{
+    label: "Info",
+    id: 'info',
+  }];
+
+  if (typeof itemData.value?.nftId === 'string') {
+    basicTabs.push({
+      label: "NFT",
+      id: 'nft',
+    });
+  }
+
+  if (isNftOwned.value || stakeData.value.nftLending) {
+    basicTabs.push(
+      {
+        label: "Stake",
+        id: 'stake',
+      });
+  }
+
+  return basicTabs;
+});
+const currentTab = ref(avaliableTabs.value[0].id);
 
 async function quickSearchItems(keyword: string) {
   if (!keyword || searchLoading.value) {
@@ -470,10 +544,6 @@ async function loadItemData() {
     showError(message);
   }
 
-  if (typeof itemData.value?.nftId === 'string') {
-    loadNftData();
-  }
-
   itemLoading.value = false;
 }
 
@@ -544,7 +614,7 @@ async function loadHistory() {
   historyLoading.value = false;
 }
 
-async function loadNftData() {
+async function loadNftDataWithLoading() {
   if (!isWalletConnected.value || typeof itemData.value?.nftId !== 'string' || nftLoading.value) {
     return;
   }
@@ -554,47 +624,7 @@ async function loadNftData() {
   nftLoading.value = true;
 
   try {
-    const walletProvider = web3Modal.getWalletProvider()
-
-    if (!web3Modal.getIsConnected()) throw Error("User disconnected")
-    if (!walletProvider) throw Error("WalletProvider not found")
-
-    const ethersProvider = new BrowserProvider(walletProvider);
-    const signer = await ethersProvider.getSigner();
-
-    const abi = nftAbi.value;
-    const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
-
-    switch (contractCodeSignature.value) {
-      case 1:
-        const response1 = await MumeArtToyContract.nftInfomationOf(itemData?.value?.nftId) as [string, boolean, bigint, string];
-        nftData.value = {
-          owner: response1[0],
-          tradable: response1[1],
-          sellable: true, // due chain bug
-          price: response1[2],
-          uri: response1[3],
-        }
-        break;
-      default:
-        const response2 = await MumeArtToyContract.nftInfomationOf(itemData?.value?.nftId) as [string, boolean, boolean, bigint, string];
-        nftData.value = {
-          owner: response2[0],
-          tradable: response2[1],
-          sellable: response2[2],
-          price: response2[3],
-          uri: response2[4],
-        }
-        break;
-    }
-
-    const abi2 = claimAbi.value;
-    if (abi2) {
-      const MumeArtToyClaimContract = new Contract(abi2.address, abi2.abi, signer);
-      const canClaimMu = await MumeArtToyClaimContract.canClaimMu(itemData?.value?.nftId) as boolean;
-      // const muGain = await MumeArtToyClaimContract.muGain(itemData?.value?.nftId) as bigint;
-      nftOptions.value.muClaimable = canClaimMu;
-    }
+    await loadNftData();
   } catch (err) {
     let message = "Can't Get NFT Data";
     if (err instanceof Error) {
@@ -611,8 +641,73 @@ async function loadNftData() {
   nftLoading.value = false;
 }
 
+async function loadNftData() {
+  const walletProvider = web3Modal.getWalletProvider()
+
+  if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+  if (!walletProvider) throw Error("WalletProvider not found")
+
+  const ethersProvider = new BrowserProvider(walletProvider);
+  const signer = await ethersProvider.getSigner();
+
+  const abi = nftAbi.value;
+  const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
+
+  switch (contractCodeSignature.value) {
+    case 1:
+      const response1 = await MumeArtToyContract.nftInfomationOf(itemData?.value?.nftId) as [string, boolean, bigint, string];
+      nftData.value = {
+        owner: response1[0],
+        tradable: response1[1],
+        sellable: true, // due chain bug
+        price: response1[2],
+        uri: response1[3],
+      }
+      break;
+    default:
+      const response2 = await MumeArtToyContract.nftInfomationOf(itemData?.value?.nftId) as [string, boolean, boolean, bigint, string];
+      nftData.value = {
+        owner: response2[0],
+        tradable: response2[1],
+        sellable: response2[2],
+        price: response2[3],
+        uri: response2[4],
+      }
+      break;
+  }
+
+  const abi2 = claimAbi.value;
+  if (abi2) {
+    const MumeArtToyClaimContract = new Contract(abi2.address, abi2.abi, signer);
+    const canClaimMu = await MumeArtToyClaimContract.canClaimMu(itemData?.value?.nftId) as boolean;
+    claimMuData.value.muClaimable = canClaimMu;
+  }
+
+  const abi3 = lendAbi.value;
+  if (abi3) {
+    const LendAbiContract = new Contract(abi3.address, abi3.abi, signer);
+    const nftLending = await LendAbiContract.nftOldOwner(itemData?.value?.nftId) as string;
+    stakeData.value.nftLending = nftLending.toLowerCase() == web3Modal.getAddress()?.toLowerCase();
+
+    const claimableMu = await LendAbiContract.muToClaim(itemData?.value?.nftId) as bigint;
+    stakeData.value.muToClaim = claimableMu;
+
+    const lendStartAt = await LendAbiContract.lendStartAt(itemData?.value?.nftId) as bigint;
+    stakeData.value.nftLendAt = dayjs(parseInt(lendStartAt.toString(), 10) * 1000).toDate();
+
+    const rewardMuPerDay = await LendAbiContract.rewardMuPerDay() as bigint;
+    stakeData.value.rewardMuPerDay = rewardMuPerDay;
+
+    if (stakeData.value.nftLending) {
+      const muStakePending = await LendAbiContract.currentSessionMuReward(itemData?.value?.nftId) as bigint;
+      stakeData.value.muStakePending = muStakePending;
+    }
+  }
+}
+
 async function buyNft() {
-  if (!isNftValid.value || !nftData.value || typeof itemData.value?.nftId !== 'string') {
+  // Only V2 can buy nft on site
+  if (!isNftValid.value || !nftData.value || typeof itemData.value?.nftId !== 'string' || contractCodeSignature.value <= 1) {
     return;
   }
 
@@ -640,7 +735,6 @@ async function buyNft() {
     useToast().success("NFT Purchased!", {
       timeout: 5000
     });
-    loadNftData();
   } catch (err) {
     let message = "Can't Buy NFT";
     if (err instanceof Error) {
@@ -685,7 +779,6 @@ async function transferToken() {
     useToast().success("NFT Transfered", {
       timeout: 5000
     });
-    loadNftData();
   } catch (err) {
     let message = "Can't Transfer NFT";
     if (err instanceof Error) {
@@ -728,7 +821,6 @@ async function toggleTradeableFlag() {
     useToast().success("NFT Updated", {
       timeout: 5000
     });
-    loadNftData();
   } catch (err) {
     let message = "Can't Set Tradable Flag";
     if (err instanceof Error) {
@@ -743,6 +835,23 @@ async function toggleTradeableFlag() {
 
 }
 
+async function setTradeable(nftId: string, state: boolean) {
+  const walletProvider = web3Modal.getWalletProvider()
+
+  if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+  if (!walletProvider) throw Error("WalletProvider not found")
+
+  const ethersProvider = new BrowserProvider(walletProvider);
+  const signer = await ethersProvider.getSigner();
+
+  const abi = nftAbi.value;
+  const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
+  const tx = await MumeArtToyContract.setTradeable(
+    nftId, state
+  );
+  await tx.wait();
+}
+
 async function toggleSellableFlag() {
   if (!isNftValid.value || !nftData.value || typeof itemData.value?.nftId !== 'string' || contractCodeSignature.value < 2) {
     return;
@@ -753,26 +862,11 @@ async function toggleSellableFlag() {
   nftLoading.value = true;
 
   try {
-    const walletProvider = web3Modal.getWalletProvider()
-
-    if (!web3Modal.getIsConnected()) throw Error("User disconnected")
-    if (!walletProvider) throw Error("WalletProvider not found")
-
-    const ethersProvider = new BrowserProvider(walletProvider);
-    const signer = await ethersProvider.getSigner();
-
-    const abi = nftAbi.value;
-    const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
-    const tx = await MumeArtToyContract.setTradeable(
-      itemData.value.nftId, nextTradableFlag
-    );
-    await tx.wait();
-
+    await setTradeable(itemData.value.nftId, nextTradableFlag);
     nftLoading.value = false;
     useToast().success("NFT Updated", {
       timeout: 5000
     });
-    loadNftData();
   } catch (err) {
     let message = "Can't Set Sellable Flag";
     if (err instanceof Error) {
@@ -816,7 +910,6 @@ async function updatePrice() {
     useToast().success("NFT Updated", {
       timeout: 5000
     });
-    loadNftData();
   } catch (err) {
     let message = "Can't Set Price";
     if (err instanceof Error) {
@@ -833,7 +926,7 @@ async function updatePrice() {
 async function claimMu() {
   const abi = claimAbi.value;
 
-  if (!nftOptions.value.muClaimable || !abi || typeof itemData.value?.nftId !== 'string') {
+  if (!claimMuData.value.muClaimable || !abi || typeof itemData.value?.nftId !== 'string') {
     return;
   }
 
@@ -857,9 +950,8 @@ async function claimMu() {
     useToast().success("NFT Updated", {
       timeout: 5000
     });
-    loadNftData();
   } catch (err) {
-    let message = "Can't Set Price";
+    let message = "Can't Claim MU";
     if (err instanceof Error) {
       message = err.message
     }
@@ -871,12 +963,201 @@ async function claimMu() {
   }
 }
 
+async function approveNft(nftId: string, address: string) {
+  const walletProvider = web3Modal.getWalletProvider()
+
+  if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+  if (!walletProvider) throw Error("WalletProvider not found")
+
+  const ethersProvider = new BrowserProvider(walletProvider);
+  const signer = await ethersProvider.getSigner();
+  const abi = nftAbi.value;
+  const MumeArtToyContract = new Contract(abi.address, abi.abi, signer);
+  const tx = await MumeArtToyContract.approve(
+    address, nftId,
+  );
+  await tx.wait();
+}
+
+async function stakeNft() {
+  const stakeAbi = lendAbi.value;
+
+  if (isNftLending.value || !stakeAbi || typeof itemData.value?.nftId !== 'string') {
+    return;
+  }
+
+  nftLoading.value = true;
+
+  try {
+    if (!isNftTradeable.value) {
+      loadingText.value = "Set Tradeable";
+      await setTradeable(itemData.value.nftId, true);
+    }
+
+    loadingText.value = "Approve Stake Contract";
+    await approveNft(itemData.value?.nftId, stakeAbi.address);
+
+    loadingText.value = "Send Transaction";
+    const walletProvider = web3Modal.getWalletProvider()
+
+    if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+    if (!walletProvider) throw Error("WalletProvider not found")
+
+    const ethersProvider = new BrowserProvider(walletProvider);
+    const signer = await ethersProvider.getSigner();
+
+    const LendNftContract = new Contract(stakeAbi.address, stakeAbi.abi, signer);
+
+    const txSent = await LendNftContract.lendNft(itemData.value?.nftId);
+    await txSent.wait();
+    nftLoading.value = false;
+    useToast().success("NFT Updated", {
+      timeout: 5000
+    });
+  } catch (err) {
+    let message = "Can't Stake Nft";
+    if (err instanceof Error) {
+      message = err.message
+    }
+
+    useToast().error(message, {
+      timeout: 5000
+    });
+    nftLoading.value = false;
+  }
+}
+
+async function claimStakeNft() {
+  const stakeAbi = lendAbi.value;
+
+  if (!isNftLending.value || !stakeAbi || typeof itemData.value?.nftId !== 'string') {
+    return;
+  }
+
+  loadingText.value = "Send Transaction";
+  nftLoading.value = true;
+
+  try {
+    const walletProvider = web3Modal.getWalletProvider()
+
+    if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+    if (!walletProvider) throw Error("WalletProvider not found")
+
+    const ethersProvider = new BrowserProvider(walletProvider);
+    const signer = await ethersProvider.getSigner();
+
+    const LendNftContract = new Contract(stakeAbi.address, stakeAbi.abi, signer);
+
+    const txSent = await LendNftContract.claimNft(itemData.value?.nftId);
+    await txSent.wait();
+    nftLoading.value = false;
+    useToast().success("NFT Updated", {
+      timeout: 5000
+    });
+  } catch (err) {
+    let message = "Can't Claim Nft";
+    if (err instanceof Error) {
+      message = err.message
+    }
+
+    useToast().error(message, {
+      timeout: 5000
+    });
+    nftLoading.value = false;
+  }
+}
+
+async function collectStakeReward() {
+  const stakeAbi = lendAbi.value;
+
+  if (!isNftLending.value || !stakeAbi || typeof itemData.value?.nftId !== 'string') {
+    return;
+  }
+
+  loadingText.value = "Send Transaction";
+  nftLoading.value = true;
+
+  try {
+    const walletProvider = web3Modal.getWalletProvider()
+
+    if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+    if (!walletProvider) throw Error("WalletProvider not found")
+
+    const ethersProvider = new BrowserProvider(walletProvider);
+    const signer = await ethersProvider.getSigner();
+
+    const LendNftContract = new Contract(stakeAbi.address, stakeAbi.abi, signer);
+
+    const txSent = await LendNftContract.renewLendSession(itemData.value?.nftId);
+    await txSent.wait();
+    nftLoading.value = false;
+    useToast().success("NFT Updated", {
+      timeout: 5000
+    });
+  } catch (err) {
+    let message = "Can't Claim Reward";
+    if (err instanceof Error) {
+      message = err.message
+    }
+
+    useToast().error(message, {
+      timeout: 5000
+    });
+    nftLoading.value = false;
+  }
+}
+
+async function claimStakeMu() {
+  const stakeAbi = lendAbi.value;
+
+  if (!stakeAbi || typeof itemData.value?.nftId !== 'string') {
+    return;
+  }
+
+  loadingText.value = "Send Transaction";
+  nftLoading.value = true;
+
+  try {
+    const walletProvider = web3Modal.getWalletProvider()
+
+    if (!web3Modal.getIsConnected()) throw Error("User disconnected")
+    if (!walletProvider) throw Error("WalletProvider not found")
+
+    const ethersProvider = new BrowserProvider(walletProvider);
+    const signer = await ethersProvider.getSigner();
+
+    const LendNftContract = new Contract(stakeAbi.address, stakeAbi.abi, signer);
+
+    console.log(stakeData.value.muToClaim.toString());
+    const txSent = await LendNftContract.claimMuReward(itemData.value?.nftId, stakeData.value.muToClaim.toString());
+    await txSent.wait();
+
+    nftLoading.value = false;
+    useToast().success("NFT Updated", {
+      timeout: 5000
+    });
+  } catch (err) {
+    let message = "Can't Claim MU";
+    if (err instanceof Error) {
+      message = err.message
+    }
+
+    useToast().error(message, {
+      timeout: 5000
+    });
+    nftLoading.value = false;
+  }
+}
 
 let timerId: NodeJS.Timeout | undefined;
 onMounted(() => {
   timerId = setInterval(() => {
     isWalletConnected.value = !!(web3Modal.getIsConnected() && web3Modal.getWalletProvider());
     isSelectedChainCorrect.value = web3Modal.getChainId() === jbcchain.chainId;
+
+    if (typeof itemData.value?.nftId === "string") {
+      loadNftData();
+    }
   }, 200);
 })
 
@@ -893,4 +1174,3 @@ loadItemData();
   grid-template-columns: max-content auto;
 }
 </style>
-

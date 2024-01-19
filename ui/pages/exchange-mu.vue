@@ -82,7 +82,7 @@
 <script setup lang="ts">
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/vue'
 import { BrowserProvider, Contract, formatUnits, parseUnits, toBigInt } from 'ethers';
-import { getMuAbi } from '~/utils/eth';
+import { getMuAbi } from '~/utils/web3';
 import { useToast } from "vue-toastification";
 
 useHead({
@@ -271,4 +271,4 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: max-content auto;
 }
-</style>
+</style>~/utils/web3
